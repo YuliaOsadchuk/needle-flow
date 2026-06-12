@@ -22,5 +22,6 @@ public class Design {
     private Designer designer;
 
     @Enumerated(EnumType.STRING)
-    private DesignStatus designStatus;
+    @JoinColumn(name = "status")
+    private DesignStatus status;
 }

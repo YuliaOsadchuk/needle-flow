@@ -37,10 +37,10 @@ CREATE TABLE designer
 
 CREATE TABLE design
 (
-    id            SERIAL PRIMARY KEY NOT NULL,
-    name          varchar            NOT NULL,
-    designer_id      INTEGER            NOT NULL REFERENCES designer (id),
-    design_status varchar            NOT NULL
+    id          SERIAL PRIMARY KEY NOT NULL,
+    name        varchar            NOT NULL,
+    designer_id INTEGER            NOT NULL REFERENCES designer (id),
+    status      varchar            NOT NULL
 );
 
 CREATE TABLE design_thread

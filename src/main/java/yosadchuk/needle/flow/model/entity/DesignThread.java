@@ -1,9 +1,6 @@
 package yosadchuk.needle.flow.model.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,13 +9,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@Table(name = "design_thread")
 public class DesignThread {
 
     @Id
     private int id;
 
     @ManyToOne
-    @JoinColumn(name = "designer_id")
+    @JoinColumn(name = "design_id")
     private Design design;
 
     @ManyToOne
