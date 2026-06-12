@@ -39,7 +39,7 @@ CREATE TABLE design
 (
     id            SERIAL PRIMARY KEY NOT NULL,
     name          varchar            NOT NULL,
-    designer      INTEGER            NOT NULL REFERENCES designer (id),
+    designer_id      INTEGER            NOT NULL REFERENCES designer (id),
     design_status varchar            NOT NULL
 );
 
