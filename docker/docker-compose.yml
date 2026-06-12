@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16.3
+    image: postgres:17
     container_name: needle-flow-db
     environment:
       POSTGRES_DB: needle_flow
