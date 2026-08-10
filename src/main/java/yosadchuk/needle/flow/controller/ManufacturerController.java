@@ -19,7 +19,7 @@ public class ManufacturerController {
 
     @GetMapping()
     public ResponseEntity<List<ManufacturerResponseDto>> findAll() {
-        return ResponseEntity.ok( manufacturerService.findAll());
+        return ResponseEntity.ok(manufacturerService.findAll());
     }
 
     @GetMapping("/{id}")
