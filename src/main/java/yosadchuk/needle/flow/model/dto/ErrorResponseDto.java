@@ -3,7 +3,7 @@ package yosadchuk.needle.flow.model.dto;
 import java.time.LocalDateTime;
 
 public record ErrorResponseDto(
-        int status,
+        Integer status,
         String message,
         LocalDateTime timestamp
 ) {

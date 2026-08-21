@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class Designer {
 
     @Id
-    private int id;
+    private Integer id;
 
     private String name;
 }

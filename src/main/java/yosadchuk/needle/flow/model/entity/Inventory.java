@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class Inventory {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
     @OneToOne
     @JoinColumn(name = "thread_id")

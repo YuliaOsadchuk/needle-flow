@@ -23,7 +23,7 @@ public class ManufacturerController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ManufacturerResponseDto> findById(@PathVariable int id) {
+    public ResponseEntity<ManufacturerResponseDto> findById(@PathVariable Integer id) {
         return ResponseEntity.ok(manufacturerService.findById(id));
     }
 
@@ -33,12 +33,12 @@ public class ManufacturerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ManufacturerResponseDto> update(@PathVariable int id, @RequestBody CreateManufacturerDto dto) {
+    public ResponseEntity<ManufacturerResponseDto> update(@PathVariable Integer id, @RequestBody CreateManufacturerDto dto) {
         return ResponseEntity.ok(manufacturerService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable int id) {
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
         manufacturerService.delete(id);
         return ResponseEntity.noContent().build();
     }

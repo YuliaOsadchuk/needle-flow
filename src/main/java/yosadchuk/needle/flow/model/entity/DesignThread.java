@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class DesignThread {
 
     @Id
-    private int id;
+    private Integer id;
 
     @ManyToOne
     @JoinColumn(name = "design_id")
