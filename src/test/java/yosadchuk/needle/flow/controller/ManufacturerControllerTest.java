@@ -88,7 +88,7 @@ class ManufacturerControllerTest {
         CreateManufacturerDto manufacturer = new CreateManufacturerDto("DMC");
         ManufacturerResponseDto responseDto = new ManufacturerResponseDto(1, "DMC");
 
-        when(service.save(manufacturer)).thenReturn(responseDto);
+        when(service.create(manufacturer)).thenReturn(responseDto);
 
         mockMvc.perform(post("/api/v1/manufacturers")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -101,7 +101,7 @@ class ManufacturerControllerTest {
     @Test
     void save_shouldReturn409_whenManufacturerAlreadyExists() throws Exception {
         CreateManufacturerDto manufacturer = new CreateManufacturerDto("DMC");
-        when(service.save(manufacturer)).thenThrow(new ResourceAlreadyExistsException("Manufacturer with name DMC already exists"));
+        when(service.create(manufacturer)).thenThrow(new ResourceAlreadyExistsException("Manufacturer with name DMC already exists"));
 
         mockMvc.perform(post("/api/v1/manufacturers")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -29,7 +29,7 @@ public class ManufacturerController {
 
     @PostMapping()
     public ResponseEntity<ManufacturerResponseDto> save(@RequestBody CreateManufacturerDto dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(manufacturerService.save(dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(manufacturerService.create(dto));
     }
 
     @PutMapping("/{id}")

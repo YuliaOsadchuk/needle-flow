@@ -34,7 +34,7 @@ public class ManufacturerService {
     }
 
     @Transactional
-    public ManufacturerResponseDto save(CreateManufacturerDto dto) {
+    public ManufacturerResponseDto create(CreateManufacturerDto dto) {
         if (manufacturerRepository.existsByName(dto.name())) {
             throw new ResourceAlreadyExistsException("Manufacturer with name " + dto.name() + " already exists");
         }
