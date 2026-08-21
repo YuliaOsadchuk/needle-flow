@@ -6,7 +6,10 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
 import tools.jackson.databind.ObjectMapper;
+import yosadchuk.needle.flow.exception.ResourceAlreadyExistsException;
+import yosadchuk.needle.flow.exception.ResourceInUseException;
 import yosadchuk.needle.flow.exception.ResourceNotFoundException;
 import yosadchuk.needle.flow.model.dto.CreateManufacturerDto;
 import yosadchuk.needle.flow.model.dto.ManufacturerResponseDto;
@@ -96,6 +99,17 @@ class ManufacturerControllerTest {
     }
 
     @Test
+    void save_shouldReturn409_whenManufacturerAlreadyExists() throws Exception {
+        CreateManufacturerDto manufacturer = new CreateManufacturerDto("DMC");
+        when(service.save(manufacturer)).thenThrow(new ResourceAlreadyExistsException("Manufacturer with name DMC already exists"));
+
+        mockMvc.perform(post("/api/v1/manufacturers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(manufacturer)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
     void update_shouldReturnOkAndUpdatedRecord() throws Exception {
         CreateManufacturerDto manufacturerDto = new CreateManufacturerDto("Anchor");
         ManufacturerResponseDto responseDto = new ManufacturerResponseDto(2, "Anchor");
@@ -118,9 +132,22 @@ class ManufacturerControllerTest {
         when(service.update(6, manufacturerDto)).thenThrow(new ResourceNotFoundException("Manufacturer with id 6 not found"));
 
         mockMvc.perform(put("/api/v1/manufacturers/{id}", 6)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(manufacturerDto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(manufacturerDto)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void update_shouldReturn409_whenManufacturerWithUpdatedNameAlreadyExists() throws Exception {
+        CreateManufacturerDto manufacturerDto = new CreateManufacturerDto("Anchor");
+
+        when(service.update(6, manufacturerDto)).thenThrow(new ResourceAlreadyExistsException
+                ("Manufacturer with name Anchor already exists"));
+
+        mockMvc.perform(put("/api/v1/manufacturers/{id}", 6)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(manufacturerDto)))
+                .andExpect(status().isConflict());
     }
 
     @Test
@@ -137,5 +164,14 @@ class ManufacturerControllerTest {
         mockMvc.perform(delete("/api/v1/manufacturers/{id}", 99))
                 .andExpect(status().isNotFound());
         verify(service).delete(99);
+    }
+
+    @Test
+    void delete_shouldReturn409_whenManufacturerHasAssociatedThreads() throws Exception {
+        doThrow(new ResourceInUseException("Cannot delete manufacturer with id 15 because it has associated threads"))
+                .when(service).delete(15);
+        mockMvc.perform(delete("/api/v1/manufacturers/{id}", 15))
+                .andExpect(status().isConflict());
+        verify(service).delete(15);
     }
 }
