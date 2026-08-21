@@ -6,4 +6,5 @@ import yosadchuk.needle.flow.model.entity.Manufacturer;
 
 @Repository
 public interface ManufacturerRepository extends JpaRepository<Manufacturer, Integer> {
+    boolean existsByName(String name);
 }
