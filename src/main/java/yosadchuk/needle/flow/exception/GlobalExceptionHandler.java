@@ -12,8 +12,20 @@ import java.time.LocalDateTime;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponseDto> handleResourceNotFound(ResourceNotFoundException e){
+    public ResponseEntity<ErrorResponseDto> handleResourceNotFound(ResourceNotFoundException e) {
         ErrorResponseDto response = new ErrorResponseDto(HttpStatus.NOT_FOUND.value(), e.getMessage(), LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(ResourceAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponseDto> handleResourceAlreadyExists(ResourceAlreadyExistsException e) {
+        ErrorResponseDto response = new ErrorResponseDto(HttpStatus.CONFLICT.value(), e.getMessage(), LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(ResourceInUseException.class)
+    public ResponseEntity<ErrorResponseDto> handleResourceInUse(ResourceInUseException e) {
+        ErrorResponseDto response = new ErrorResponseDto(HttpStatus.CONFLICT.value(), e.getMessage(), LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 }
