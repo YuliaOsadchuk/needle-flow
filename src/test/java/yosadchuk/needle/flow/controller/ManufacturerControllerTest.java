@@ -84,7 +84,7 @@ class ManufacturerControllerTest {
     }
 
     @Test
-    void save_shouldReturnCreatedAndNewManufacturer() throws Exception {
+    void create_shouldReturnCreatedAndNewManufacturer() throws Exception {
         CreateManufacturerDto manufacturer = new CreateManufacturerDto("DMC");
         ManufacturerResponseDto responseDto = new ManufacturerResponseDto(1, "DMC");
 
@@ -99,7 +99,7 @@ class ManufacturerControllerTest {
     }
 
     @Test
-    void save_shouldReturn409_whenManufacturerAlreadyExists() throws Exception {
+    void create_shouldReturn409_whenManufacturerAlreadyExists() throws Exception {
         CreateManufacturerDto manufacturer = new CreateManufacturerDto("DMC");
         when(service.create(manufacturer)).thenThrow(new ResourceAlreadyExistsException("Manufacturer with name DMC already exists"));
 

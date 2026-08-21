@@ -1,6 +1,7 @@
 package yosadchuk.needle.flow.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import yosadchuk.needle.flow.model.dto.CreateThreadDto;
@@ -28,7 +29,7 @@ public class ThreadController {
 
     @PostMapping
     public ResponseEntity<ThreadResponseDto> save(@RequestBody CreateThreadDto dto) {
-        return ResponseEntity.ok(threadService.create(dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(threadService.create(dto));
     }
 
     @PutMapping("/{id}")
