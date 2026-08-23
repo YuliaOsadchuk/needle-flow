@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import yosadchuk.needle.flow.exception.ResourceAlreadyExistsException;
+import yosadchuk.needle.flow.exception.ResourceInUseException;
 import yosadchuk.needle.flow.exception.ResourceNotFoundException;
 import yosadchuk.needle.flow.model.dto.CreateDesignerDto;
 import yosadchuk.needle.flow.model.dto.DesignerResponseDto;
@@ -169,14 +170,14 @@ public class DesignerControllerTest {
         verify(service).delete(99);
     }
 
-//    @Test
-//    void delete_shouldReturn409_whenDesignerHasAssociatedDesigns() throws Exception {
-//        doThrow(new ResourceInUseException("Cannot delete designer with id 1 because it has associated designs"))
-//                .when(service).delete(1);
-//
-//        mockMvc.perform(delete("/api/v1/designers/{id}", 1))
-//                .andExpect(status().isConflict());
-//
-//        verify(service).delete(1);
-//    }
+    @Test
+    void delete_shouldReturn409_whenDesignerHasAssociatedDesigns() throws Exception {
+        doThrow(new ResourceInUseException("Cannot delete designer with id 1 because it has associated designs"))
+                .when(service).delete(1);
+
+        mockMvc.perform(delete("/api/v1/designers/{id}", 1))
+                .andExpect(status().isConflict());
+
+        verify(service).delete(1);
+    }
 }

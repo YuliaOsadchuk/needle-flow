@@ -40,7 +40,8 @@ CREATE TABLE design
     id          SERIAL PRIMARY KEY NOT NULL,
     name        varchar            NOT NULL,
     designer_id INTEGER            NOT NULL REFERENCES designer (id),
-    status      varchar            NOT NULL
+    status      varchar            NOT NULL,
+    UNIQUE (name, designer_id)
 );
 
 CREATE TABLE design_thread
