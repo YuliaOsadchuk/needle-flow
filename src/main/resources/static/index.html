@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeedleFlow — Каталог та Запаси Муліне</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue.js 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Axios CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        [v-cloak] {
+            display: none;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800 min-h-screen">
+
+<div id="app" v-cloak class="max-w-6xl mx-auto p-4 md:p-6">
+
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-6 border-b border-stone-200 gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-stone-900 tracking-tight flex items-center gap-2">
+                <span class="text-rose-600">🪡</span> NeedleFlow
+            </h1>
+            <p class="text-sm text-stone-500">Управління палітрою, дизайнерами та схемами вишивки</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex flex-wrap items-center gap-1.5 bg-stone-200/60 p-1 rounded-xl w-fit">
+            <button @click="currentTab = 'designs'"
+                    :class="currentTab === 'designs' ? 'bg-white shadow-sm text-stone-900 font-medium' : 'text-stone-600 hover:text-stone-900'"
+                    class="px-3.5 py-1.5 rounded-lg text-sm transition">
+                🖼️ Дизайни
+            </button>
+            <button @click="currentTab = 'designers'"
+                    :class="currentTab === 'designers' ? 'bg-white shadow-sm text-stone-900 font-medium' : 'text-stone-600 hover:text-stone-900'"
+                    class="px-3.5 py-1.5 rounded-lg text-sm transition">
+                🎨 Дизайнери
+            </button>
+            <button @click="currentTab = 'threads'"
+                    :class="currentTab === 'threads' ? 'bg-white shadow-sm text-stone-900 font-medium' : 'text-stone-600 hover:text-stone-900'"
+                    class="px-3.5 py-1.5 rounded-lg text-sm transition">
+                🧵 Нитки
+            </button>
+            <button @click="currentTab = 'manufacturers'"
+                    :class="currentTab === 'manufacturers' ? 'bg-white shadow-sm text-stone-900 font-medium' : 'text-stone-600 hover:text-stone-900'"
+                    class="px-3.5 py-1.5 rounded-lg text-sm transition">
+                🏢 Виробники
+            </button>
+        </div>
+    </header>
+
+    <!-- Global Toast / Alert -->
+    <div v-if="toast.show"
+         :class="toast.isError ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'"
+         class="fixed bottom-4 right-4 z-50 max-w-md p-4 rounded-xl border shadow-lg flex items-start gap-3 transition-all">
+        <span class="text-lg">{{ toast.isError ? '⚠️' : '✅' }}</span>
+        <div class="flex-1 text-sm font-medium">{{ toast.message }}</div>
+        <button @click="toast.show = false" class="text-stone-400 hover:text-stone-600">✕</button>
+    </div>
+
+    <!-- ================= DESIGNS TAB ================= -->
+    <main v-if="currentTab === 'designs'">
+        <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6">
+            <div class="flex flex-1 flex-col sm:flex-row gap-3">
+                <input v-model="designSearch" type="text" placeholder="Пошук дизайну за назвою..."
+                       class="px-4 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 flex-1">
+
+                <select v-model="selectedDesignerFilter"
+                        class="px-4 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500">
+                    <option :value="null">Всі дизайнери</option>
+                    <option v-for="d in designers" :key="d.id" :value="d.id">{{ d.name }}</option>
+                </select>
+            </div>
+
+            <button @click="openDesignModal()"
+                    class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-medium transition shadow-sm flex items-center justify-center gap-2">
+                <span>+</span> Додати дизайн
+            </button>
+        </div>
+
+        <div v-if="filteredDesigns.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div v-for="d in filteredDesigns" :key="d.id"
+                 class="bg-white border border-stone-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between group">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 bg-rose-50 text-rose-700 rounded-lg text-xs font-semibold">
+                            🎨 {{ d.designer ? d.designer.name : 'Без автора' }}
+                        </span>
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                            <button @click="openDesignModal(d)"
+                                    class="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100"
+                                    title="Редагувати">✏️
+                            </button>
+                            <button @click="deleteDesign(d.id)"
+                                    class="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-100"
+                                    title="Видалити">🗑️
+                            </button>
+                        </div>
+                    </div>
+
+                    <h3 class="text-lg font-bold text-stone-900 mb-4">{{ d.name || d.title }}</h3>
+
+                    <!-- Design Threads List -->
+                    <div class="space-y-2">
+                        <div class="text-xs font-semibold text-stone-400 uppercase tracking-wider">Необхідні нитки:
+                        </div>
+                        <div v-if="d.threads && d.threads.length > 0" class="flex flex-wrap gap-1.5">
+        <span v-for="dt in d.threads" :key="dt.threadId || dt.id"
+              class="px-2 py-1 bg-stone-100 text-stone-700 rounded-md text-xs font-medium border border-stone-200/60">
+            #{{ dt.thread?.code || dt.threadCode || dt.code }} <span class="text-stone-400">({{ dt.requiredMeters
+            }}м)</span>
+        </span>
+                        </div>
+                        <p v-else class="text-xs text-stone-400 italic">Нитки ще не додані</p>
+                    </div>
+                </div>
+
+                <div class="pt-4 mt-4 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
+                    <span>ID: {{ d.id }}</span>
+                    <span>Кількість ниток: <strong>{{ d.threads ? d.threads.length : 0 }}</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <div v-else class="text-center py-16 bg-white rounded-2xl border border-dashed border-stone-200">
+            <p class="text-stone-400 text-base mb-2">Дизайнів не знайдено</p>
+            <p class="text-stone-500 text-sm">Створіть перший дизайн або змініть фільтри</p>
+        </div>
+    </main>
+
+    <!-- ================= DESIGNERS TAB ================= -->
+    <main v-if="currentTab === 'designers'">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg font-semibold text-stone-900">Список дизайнерів</h2>
+            <button @click="openDesignerModal()"
+                    class="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-sm font-medium transition shadow-sm">
+                + Додати дизайнера
+            </button>
+        </div>
+
+        <div class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-stone-50 border-b border-stone-200 text-stone-500 uppercase text-xs font-semibold">
+                <tr>
+                    <th class="px-6 py-3.5">ID</th>
+                    <th class="px-6 py-3.5">Ім'я / Студія</th>
+                    <th class="px-6 py-3.5 text-right">Дії</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-stone-100">
+                <tr v-for="d in designers" :key="d.id" class="hover:bg-stone-50/50 transition">
+                    <td class="px-6 py-4 font-mono text-xs text-stone-400">#{{ d.id }}</td>
+                    <td class="px-6 py-4 font-semibold text-stone-900">{{ d.name }}</td>
+                    <td class="px-6 py-4 text-right space-x-2">
+                        <button @click="openDesignerModal(d)"
+                                class="px-3 py-1.5 text-xs text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition">
+                            Редагувати
+                        </button>
+                        <button @click="deleteDesigner(d.id)"
+                                class="px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg transition">
+                            Видалити
+                        </button>
+                    </td>
+                </tr>
+                <tr v-if="designers.length === 0">
+                    <td colspan="3" class="px-6 py-8 text-center text-stone-400">Список дизайнерів порожній</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- ================= THREADS TAB ================= -->
+    <main v-if="currentTab === 'threads'">
+        <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6">
+            <div class="flex flex-1 flex-col sm:flex-row gap-3">
+                <input v-model="threadSearch" type="text" placeholder="Пошук за кодом або назвою..."
+                       class="px-4 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 flex-1">
+
+                <select v-model="selectedManufacturerFilter"
+                        class="px-4 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500">
+                    <option :value="null">Всі виробники</option>
+                    <option v-for="m in manufacturers" :key="m.id" :value="m.id">{{ m.name }}</option>
+                </select>
+            </div>
+
+            <button @click="openThreadModal()"
+                    class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-medium transition shadow-sm flex items-center justify-center gap-2">
+                <span>+</span> Додати нитку
+            </button>
+        </div>
+
+        <div v-if="filteredThreads.length > 0"
+             class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div v-for="t in filteredThreads" :key="t.id"
+                 class="bg-white border border-stone-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md transition flex flex-col justify-between group">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 bg-stone-100 text-stone-600 rounded-lg text-xs font-semibold uppercase tracking-wider">
+                            {{ t.manufacturer ? t.manufacturer.name : 'Unassigned' }}
+                        </span>
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                            <button @click="openThreadModal(t)"
+                                    class="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100"
+                                    title="Редагувати">✏️
+                            </button>
+                            <button @click="deleteThread(t.id)"
+                                    class="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-100"
+                                    title="Видалити">🗑️
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-baseline gap-2 mb-1">
+                        <span class="text-2xl font-black text-stone-900 tracking-tight">#{{ t.code }}</span>
+                    </div>
+                    <p class="text-sm text-stone-600 line-clamp-1 mb-4">{{ t.name }}</p>
+                </div>
+
+                <div class="pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
+                    <span>ID: {{ t.id }}</span>
+                    <span class="text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full">В наявності</span>
+                </div>
+            </div>
+        </div>
+
+        <div v-else class="text-center py-16 bg-white rounded-2xl border border-dashed border-stone-200">
+            <p class="text-stone-400 text-base mb-2">Ниток не знайдено</p>
+            <p class="text-stone-500 text-sm">Створіть першу нитку або змініть параметри фільтрації</p>
+        </div>
+    </main>
+
+    <!-- ================= MANUFACTURERS TAB ================= -->
+    <main v-if="currentTab === 'manufacturers'">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg font-semibold text-stone-900">Список виробників</h2>
+            <button @click="openManufacturerModal()"
+                    class="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-sm font-medium transition shadow-sm">
+                + Додати виробника
+            </button>
+        </div>
+
+        <div class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-stone-50 border-b border-stone-200 text-stone-500 uppercase text-xs font-semibold">
+                <tr>
+                    <th class="px-6 py-3.5">ID</th>
+                    <th class="px-6 py-3.5">Назва бренда</th>
+                    <th class="px-6 py-3.5 text-right">Дії</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-stone-100">
+                <tr v-for="m in manufacturers" :key="m.id" class="hover:bg-stone-50/50 transition">
+                    <td class="px-6 py-4 font-mono text-xs text-stone-400">#{{ m.id }}</td>
+                    <td class="px-6 py-4 font-semibold text-stone-900">{{ m.name }}</td>
+                    <td class="px-6 py-4 text-right space-x-2">
+                        <button @click="openManufacturerModal(m)"
+                                class="px-3 py-1.5 text-xs text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition">
+                            Редагувати
+                        </button>
+                        <button @click="deleteManufacturer(m.id)"
+                                class="px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg transition">
+                            Видалити
+                        </button>
+                    </td>
+                </tr>
+                <tr v-if="manufacturers.length === 0">
+                    <td colspan="3" class="px-6 py-8 text-center text-stone-400">Список виробників порожній</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- ================= MODAL: DESIGN ================= -->
+    <div v-if="designModal.show"
+         class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-stone-100 max-h-[90vh] flex flex-col">
+            <h3 class="text-lg font-bold text-stone-900 mb-4">
+                {{ designModal.isEdit ? 'Редагувати дизайн' : 'Новий дизайн' }}
+            </h3>
+
+            <form @submit.prevent="saveDesign" class="space-y-4 overflow-y-auto pr-1 flex-1">
+                <div>
+                    <label class="block text-xs font-semibold text-stone-600 uppercase mb-1">Назва дизайну</label>
+                    <input v-model="designForm.title" type="text" required placeholder="наприклад, Осінній Семплер"
+                           class="w-full px-3 py-2 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-stone-600 uppercase mb-1">Дизайнер</label>
+                    <select v-model="designForm.designerId" required
+                            class="w-full px-3 py-2 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500">
+                        <option :value="null" disabled>Оберіть дизайнера</option>
+                        <option v-for="d in designers" :key="d.id" :value="d.id">{{ d.name }}</option>
+                    </select>
+                </div>
+
+                <!-- Dynamic Threads Section -->
+                <div class="pt-2">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-xs font-semibold text-stone-600 uppercase">Специфікація ниток</label>
+                        <button type="button" @click="addThreadToDesignForm"
+                                class="text-xs text-rose-600 hover:text-rose-700 font-semibold">+ Додати нитку
+                        </button>
+                    </div>
+
+                    <div v-if="designForm.threads.length > 0" class="space-y-2">
+                        <div v-for="(dt, index) in designForm.threads" :key="index"
+                             class="flex items-center gap-2 bg-stone-50 p-2 rounded-xl border border-stone-200/60">
+                            <select v-model="dt.threadId" required
+                                    class="flex-1 px-2.5 py-1.5 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20">
+                                <option :value="null" disabled>Нитка...</option>
+                                <option v-for="t in threads" :key="t.id" :value="t.id">
+                                    #{{ t.code }} - {{ t.name }} ({{ t.manufacturer ? t.manufacturer.name : '' }})
+                                </option>
+                            </select>
+
+                            <input v-model.number="dt.requiredMeters" type="number" step="0.1" min="0.1" required
+                                   placeholder="Метри"
+                                   class="w-24 px-2.5 py-1.5 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20">
+
+                            <button type="button" @click="removeThreadFromDesignForm(index)"
+                                    class="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg" title="Видалити">✕
+                            </button>
+                        </div>
+                    </div>
+                    <p v-else
+                       class="text-xs text-stone-400 text-center py-3 border border-dashed border-stone-200 rounded-xl">
+                        Натисніть "+ Додати нитку" для вибору палітри</p>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-stone-100">
+                    <button type="button" @click="designModal.show = false"
+                            class="px-4 py-2 text-sm text-stone-600 hover:bg-stone-100 rounded-xl transition">Скасувати
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 text-sm bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl transition">
+                        Зберегти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: DESIGNER ================= -->
+    <div v-if="designerModal.show"
+         class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-stone-100">
+            <h3 class="text-lg font-bold text-stone-900 mb-4">
+                {{ designerModal.isEdit ? 'Редагувати дизайнера' : 'Новий дизайнер' }}
+            </h3>
+
+            <form @submit.prevent="saveDesigner" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-stone-600 uppercase mb-1">Ім'я / Назва бренду</label>
+                    <input v-model="designerForm.name" type="text" required
+                           placeholder="Dimensions, Mirabilia, Автор..."
+                           class="w-full px-3 py-2 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-stone-500/20 focus:border-stone-900">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-stone-100">
+                    <button type="button" @click="designerModal.show = false"
+                            class="px-4 py-2 text-sm text-stone-600 hover:bg-stone-100 rounded-xl transition">Скасувати
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 text-sm bg-stone-900 hover:bg-stone-800 text-white font-medium rounded-xl transition">
+                        Зберегти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: THREAD ================= -->
+    <div v-if="threadModal.show"
+         class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-stone-100">
+            <h3 class="text-lg font-bold text-stone-900 mb-4">
+                {{ threadModal.isEdit ? 'Редагувати нитку' : 'Нова нитка' }}
+            </h3>
+
+            <form @submit.prevent="saveThread" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-stone-600 uppercase mb-1">Виробник</label>
+                    <select v-model="threadForm.manufacturerId" required
+                            class="w-full px-3 py-2 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500">
+                        <option :value="null" disabled>Оберіть виробника</option>
+                        <option v-for="m in manufacturers" :key="m.id" :value="m.id">{{ m.name }}</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-stone-600 uppercase mb-1">Код нитки</label>
+                    <input v-model="threadForm.code" type="text" required placeholder="наприклад, 310 або B5200"
+                           class="w-full px-3 py-2 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-stone-600 uppercase mb-1">Назва кольору</label>
+                    <input v-model="threadForm.name" type="text" required placeholder="наприклад, Black"
+                           class="w-full px-3 py-2 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-stone-100">
+                    <button type="button" @click="threadModal.show = false"
+                            class="px-4 py-2 text-sm text-stone-600 hover:bg-stone-100 rounded-xl transition">Скасувати
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 text-sm bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl transition">
+                        Зберегти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: MANUFACTURER ================= -->
+    <div v-if="manufacturerModal.show"
+         class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-stone-100">
+            <h3 class="text-lg font-bold text-stone-900 mb-4">
+                {{ manufacturerModal.isEdit ? 'Редагувати виробника' : 'Новий виробник' }}
+            </h3>
+
+            <form @submit.prevent="saveManufacturer" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-stone-600 uppercase mb-1">Назва бренда</label>
+                    <input v-model="manufacturerForm.name" type="text" required placeholder="DMC, Anchor, Gamma..."
+                           class="w-full px-3 py-2 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-stone-500/20 focus:border-stone-900">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-stone-100">
+                    <button type="button" @click="manufacturerModal.show = false"
+                            class="px-4 py-2 text-sm text-stone-600 hover:bg-stone-100 rounded-xl transition">Скасувати
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 text-sm bg-stone-900 hover:bg-stone-800 text-white font-medium rounded-xl transition">
+                        Зберегти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const {createApp, ref, computed, onMounted} = Vue;
+
+    createApp({
+        setup() {
+            const API_BASE = '/api/v1';
+
+            const currentTab = ref('designs');
+            const threads = ref([]);
+            const manufacturers = ref([]);
+            const designers = ref([]);
+            const designs = ref([]);
+
+            const threadSearch = ref('');
+            const selectedManufacturerFilter = ref(null);
+            const designSearch = ref('');
+            const selectedDesignerFilter = ref(null);
+
+            // Notification System
+            const toast = ref({show: false, message: '', isError: false});
+            const showToast = (message, isError = false) => {
+                toast.value = {show: true, message, isError};
+                setTimeout(() => toast.value.show = false, 4000);
+            };
+
+            // Forms & Modals State
+            const threadModal = ref({show: false, isEdit: false, id: null});
+            const threadForm = ref({code: '', name: '', manufacturerId: null});
+
+            const manufacturerModal = ref({show: false, isEdit: false, id: null});
+            const manufacturerForm = ref({name: ''});
+
+            const designerModal = ref({show: false, isEdit: false, id: null});
+            const designerForm = ref({name: ''});
+
+            const designModal = ref({show: false, isEdit: false, id: null});
+            const designForm = ref({title: '', designerId: null, threads: []});
+
+            // API Calls
+            const fetchThreads = async () => {
+                try {
+                    const res = await axios.get(`${API_BASE}/threads`);
+                    threads.value = res.data;
+                } catch (err) {
+                    showToast('Помилка завантаження ниток', true);
+                }
+            };
+
+            const fetchManufacturers = async () => {
+                try {
+                    const res = await axios.get(`${API_BASE}/manufacturers`);
+                    manufacturers.value = res.data;
+                } catch (err) {
+                    showToast('Помилка завантаження виробників', true);
+                }
+            };
+
+            const fetchDesigners = async () => {
+                try {
+                    const res = await axios.get(`${API_BASE}/designers`);
+                    designers.value = res.data;
+                } catch (err) {
+                    showToast('Помилка завантаження дизайнерів', true);
+                }
+            };
+
+            const fetchDesigns = async () => {
+                try {
+                    const response = await axios.get(`${API_BASE}/designs`);
+                    designs.value = response.data.content || response.data;
+                } catch (err) {
+                    showToast('Помилка завантаження дизайнів', true);
+                }
+            };
+
+            // Designer Actions
+            const openDesignerModal = (d = null) => {
+                if (d) {
+                    designerModal.value = {show: true, isEdit: true, id: d.id};
+                    designerForm.value = {name: d.name};
+                } else {
+                    designerModal.value = {show: true, isEdit: false, id: null};
+                    designerForm.value = {name: ''};
+                }
+            };
+
+            const saveDesigner = async () => {
+                try {
+                    if (designerModal.value.isEdit) {
+                        await axios.put(`${API_BASE}/designers/${designerModal.value.id}`, designerForm.value);
+                        showToast('Дизайнера оновлено');
+                    } else {
+                        await axios.post(`${API_BASE}/designers`, designerForm.value);
+                        showToast('Дизайнера додано');
+                    }
+                    designerModal.value.show = false;
+                    fetchDesigners();
+                } catch (err) {
+                    const msg = err.response?.data?.message || 'Помилка збереження дизайнера';
+                    showToast(msg, true);
+                }
+            };
+
+            const deleteDesigner = async (id) => {
+                if (!confirm('Ви дійсно хочете видалити дизайнера?')) return;
+                try {
+                    await axios.delete(`${API_BASE}/designers/${id}`);
+                    showToast('Дизайнера видалено');
+                    fetchDesigners();
+                } catch (err) {
+                    showToast('Неможливо видалити дизайнера, до якого прив\'язані дизайни!', true);
+                }
+            };
+
+            // Design Actions
+            const openDesignModal = (d = null) => {
+                if (d) {
+                    designModal.value = {show: true, isEdit: true, id: d.id};
+                    designForm.value = {
+                        title: d.name || d.title, // <-- Перевірка на d.name!
+                        designerId: d.designer ? d.designer.id : null,
+                        status: d.status || 'IN_PROGRESS',
+                        // Перевіряємо t.threadId або t.thread?.id залежно від мапера бекенду
+                        threads: d.threads ? d.threads.map(t => ({
+                            threadId: t.threadId || t.thread?.id || t.id,
+                            requiredMeters: t.requiredMeters
+                        })) : []
+                    };
+                } else {
+                    designModal.value = {show: true, isEdit: false, id: null};
+                    designForm.value = {
+                        title: '',
+                        designerId: designers.value[0]?.id || null,
+                        status: 'IN_PROGRESS',
+                        threads: []
+                    };
+                }
+            };
+
+            const addThreadToDesignForm = () => {
+                designForm.value.threads.push({threadId: threads.value[0]?.id || null, requiredMeters: 1.0});
+            };
+
+            const removeThreadFromDesignForm = (index) => {
+                designForm.value.threads.splice(index, 1);
+            };
+
+            const saveDesign = async () => {
+                try {
+                    const payload = {
+                        name: designForm.value.title,
+                        designer: designForm.value.designerId,
+                        status: designForm.value.status || 'IN_PROGRESS',
+                        threads: designForm.value.threads.map(t => ({
+                            threadId: t.threadId,
+                            requiredMeters: t.requiredMeters
+                        }))
+                    };
+
+                    if (designModal.value.isEdit) {
+                        await axios.put(`${API_BASE}/designs/${designModal.value.id}`, payload);
+                        showToast('Дизайн оновлено');
+                    } else {
+                        await axios.post(`${API_BASE}/designs`, payload);
+                        showToast('Дизайн створено');
+                    }
+                    designModal.value.show = false;
+                    fetchDesigns();
+                } catch (err) {
+                    const msg = err.response?.data?.message || 'Помилка збереження дизайну';
+                    showToast(msg, true);
+                }
+            };
+
+            const deleteDesign = async (id) => {
+                if (!confirm('Ви дійсно хочете видалити цей дизайн?')) return;
+                try {
+                    await axios.delete(`${API_BASE}/designs/${id}`);
+                    showToast('Дизайн видалено');
+                    fetchDesigns();
+                } catch (err) {
+                    showToast('Помилка видалення дизайну', true);
+                }
+            };
+
+            // Thread Actions
+            const openThreadModal = (thread = null) => {
+                if (thread) {
+                    threadModal.value = {show: true, isEdit: true, id: thread.id};
+                    threadForm.value = {
+                        code: thread.code,
+                        name: thread.name,
+                        manufacturerId: thread.manufacturer ? thread.manufacturer.id : null
+                    };
+                } else {
+                    threadModal.value = {show: true, isEdit: false, id: null};
+                    threadForm.value = {code: '', name: '', manufacturerId: manufacturers.value[0]?.id || null};
+                }
+            };
+
+            const saveThread = async () => {
+                try {
+                    if (threadModal.value.isEdit) {
+                        await axios.put(`${API_BASE}/threads/${threadModal.value.id}`, threadForm.value);
+                        showToast('Нитку оновлено');
+                    } else {
+                        await axios.post(`${API_BASE}/threads`, threadForm.value);
+                        showToast('Нитку створено');
+                    }
+                    threadModal.value.show = false;
+                    fetchThreads();
+                } catch (err) {
+                    const msg = err.response?.data?.message || 'Помилка збереження нитки';
+                    showToast(msg, true);
+                }
+            };
+
+            const deleteThread = async (id) => {
+                if (!confirm('Ви дійсно хочете видалити цю нитку?')) return;
+                try {
+                    await axios.delete(`${API_BASE}/threads/${id}`);
+                    showToast('Нитку видалено');
+                    fetchThreads();
+                } catch (err) {
+                    showToast('Помилка видалення нитки', true);
+                }
+            };
+
+            // Manufacturer Actions
+            const openManufacturerModal = (m = null) => {
+                if (m) {
+                    manufacturerModal.value = {show: true, isEdit: true, id: m.id};
+                    manufacturerForm.value = {name: m.name};
+                } else {
+                    manufacturerModal.value = {show: true, isEdit: false, id: null};
+                    manufacturerForm.value = {name: ''};
+                }
+            };
+
+            const saveManufacturer = async () => {
+                try {
+                    if (manufacturerModal.value.isEdit) {
+                        await axios.put(`${API_BASE}/manufacturers/${manufacturerModal.value.id}`, manufacturerForm.value);
+                        showToast('Виробника оновлено');
+                    } else {
+                        await axios.post(`${API_BASE}/manufacturers`, manufacturerForm.value);
+                        showToast('Виробника додано');
+                    }
+                    manufacturerModal.value.show = false;
+                    fetchManufacturers();
+                } catch (err) {
+                    const msg = err.response?.data?.message || 'Помилка збереження виробника';
+                    showToast(msg, true);
+                }
+            };
+
+            const deleteManufacturer = async (id) => {
+                if (!confirm('Ви дійсно хочете видалити виробника?')) return;
+                try {
+                    await axios.delete(`${API_BASE}/manufacturers/${id}`);
+                    showToast('Виробника видалено');
+                    fetchManufacturers();
+                } catch (err) {
+                    showToast('Неможливо видалити виробника: до нього прив\'язані нитки!', true);
+                }
+            };
+
+            // Computed Filters
+            const filteredThreads = computed(() => {
+                return threads.value.filter(t => {
+                    const matchesSearch = t.code.toLowerCase().includes(threadSearch.value.toLowerCase()) ||
+                        t.name.toLowerCase().includes(threadSearch.value.toLowerCase());
+                    const matchesMfr = !selectedManufacturerFilter.value ||
+                        (t.manufacturer && t.manufacturer.id === selectedManufacturerFilter.value);
+                    return matchesSearch && matchesMfr;
+                });
+            });
+
+            const filteredDesigns = computed(() => {
+                return designs.value.filter(d => {
+                    const nameMatch = !designSearch.value ||
+                        (d.name && d.name.toLowerCase().includes(designSearch.value.toLowerCase())) ||
+                        (d.title && d.title.toLowerCase().includes(designSearch.value.toLowerCase()));
+
+                    const designerMatch = !selectedDesignerFilter.value ||
+                        (d.designer && d.designer.id === selectedDesignerFilter.value);
+
+                    return nameMatch && designerMatch;
+                });
+            });
+
+            onMounted(() => {
+                fetchThreads();
+                fetchManufacturers();
+                fetchDesigners();
+                fetchDesigns();
+            });
+
+            return {
+                currentTab,
+                threads,
+                manufacturers,
+                designers,
+                designs,
+                threadSearch,
+                selectedManufacturerFilter,
+                designSearch,
+                selectedDesignerFilter,
+                filteredThreads,
+                filteredDesigns,
+                toast,
+                threadModal,
+                threadForm,
+                manufacturerModal,
+                manufacturerForm,
+                designerModal,
+                designerForm,
+                designModal,
+                designForm,
+                openThreadModal,
+                saveThread,
+                deleteThread,
+                openManufacturerModal,
+                saveManufacturer,
+                deleteManufacturer,
+                openDesignerModal,
+                saveDesigner,
+                deleteDesigner,
+                openDesignModal,
+                addThreadToDesignForm,
+                removeThreadFromDesignForm,
+                saveDesign,
+                deleteDesign
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
