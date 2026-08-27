@@ -1,14 +1,13 @@
 package yosadchuk.needle.flow.model.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
 public class Inventory {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)

@@ -28,12 +28,12 @@ public class DesignController {
     }
 
     @PostMapping
-    public ResponseEntity<DesignResponseDto> save(@RequestBody CreateDesignDto dto){
+    public ResponseEntity<DesignResponseDto> save(@RequestBody CreateDesignDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(designService.save(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DesignResponseDto> update(@PathVariable Integer id, @RequestBody CreateDesignDto dto){
+    public ResponseEntity<DesignResponseDto> update(@PathVariable Integer id, @RequestBody CreateDesignDto dto) {
         return ResponseEntity.ok().body(designService.update(id, dto));
     }
 
