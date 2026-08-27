@@ -49,7 +49,7 @@ CREATE TABLE design_thread
     id              SERIAL PRIMARY KEY NOT NULL,
     design_id       INTEGER            NOT NULL REFERENCES design (id),
     thread_id       INTEGER            NOT NULL REFERENCES thread (id),
-    required_meters DOUBLE PRECISION   NOT NULL DEFAULT 0.0,
+    required_meters NUMERIC            NOT NULL DEFAULT 0.0,
     UNIQUE (design_id, thread_id)
 );
 

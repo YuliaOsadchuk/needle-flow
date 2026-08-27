@@ -1,14 +1,15 @@
 package yosadchuk.needle.flow.model.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.util.List;
 
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
 public class Design {
 
     @Id
@@ -17,11 +18,13 @@ public class Design {
 
     private String name;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "designer_id")
     private Designer designer;
 
     @Enumerated(EnumType.STRING)
-    @JoinColumn(name = "status")
     private DesignStatus status;
+
+    @OneToMany(mappedBy = "design", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DesignThread> threads;
 }

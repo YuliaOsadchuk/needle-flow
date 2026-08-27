@@ -9,12 +9,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import yosadchuk.needle.flow.exception.ResourceAlreadyExistsException;
 import yosadchuk.needle.flow.exception.ResourceNotFoundException;
-import yosadchuk.needle.flow.model.dto.CreateDesignDto;
-import yosadchuk.needle.flow.model.dto.DesignResponseDto;
-import yosadchuk.needle.flow.model.dto.DesignerResponseDto;
+import yosadchuk.needle.flow.model.dto.*;
 import yosadchuk.needle.flow.model.entity.DesignStatus;
 import yosadchuk.needle.flow.service.DesignService;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -36,9 +35,13 @@ class DesignControllerTest {
     @Test
     void findAll_shouldReturnOkAndListOfDesigns() throws Exception {
         DesignerResponseDto designerDto = new DesignerResponseDto(1, "Dimensions");
+        List<DesignThreadResponseDto> threads = List.of(
+                new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10))
+        );
+
         List<DesignResponseDto> mockResponseBody = List.of(
-                new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED),
-                new DesignResponseDto(2, "Lighthouse", designerDto, DesignStatus.IN_PROGRESS)
+                new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED, threads),
+                new DesignResponseDto(2, "Lighthouse", designerDto, DesignStatus.IN_PROGRESS, threads)
         );
 
         when(service.findAll()).thenReturn(mockResponseBody);
@@ -67,7 +70,10 @@ class DesignControllerTest {
     @Test
     void findById_shouldReturnOkAndOneRecord() throws Exception {
         DesignerResponseDto designerDto = new DesignerResponseDto(1, "Dimensions");
-        DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED);
+        List<DesignThreadResponseDto> threads = List.of(
+                new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10))
+        );
+        DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED, threads);
 
         when(service.findById(1)).thenReturn(responseDto);
 
@@ -89,9 +95,13 @@ class DesignControllerTest {
 
     @Test
     void save_shouldReturnCreatedAndNewDesign() throws Exception {
-        CreateDesignDto createDto = new CreateDesignDto("Sunflowers", 1, DesignStatus.PLANNED);
+        List<DesignThreadRequestDto> threadsResponse = List.of(new DesignThreadRequestDto(1, new BigDecimal(10)));
+        CreateDesignDto createDto = new CreateDesignDto("Sunflowers", 1, DesignStatus.PLANNED, threadsResponse);
         DesignerResponseDto designerDto = new DesignerResponseDto(1, "Dimensions");
-        DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED);
+        List<DesignThreadResponseDto> threads = List.of(
+                new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10))
+        );
+        DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED, threads);
 
         when(service.save(createDto)).thenReturn(responseDto);
 
@@ -106,7 +116,8 @@ class DesignControllerTest {
 
     @Test
     void save_shouldReturn409_whenDesignAlreadyExistsForDesigner() throws Exception {
-        CreateDesignDto createDto = new CreateDesignDto("Sunflowers", 1, DesignStatus.PLANNED);
+        List<DesignThreadRequestDto> threadsResponse = List.of(new DesignThreadRequestDto(1, new BigDecimal(10)));
+        CreateDesignDto createDto = new CreateDesignDto("Sunflowers", 1, DesignStatus.PLANNED, threadsResponse);
 
         when(service.save(createDto))
                 .thenThrow(new ResourceAlreadyExistsException("Design with name Sunflowers for designer already exists"));
@@ -119,9 +130,13 @@ class DesignControllerTest {
 
     @Test
     void update_shouldReturnOkAndUpdatedRecord() throws Exception {
-        CreateDesignDto updateDto = new CreateDesignDto("Sunflowers Updated", 1, DesignStatus.IN_PROGRESS);
+        List<DesignThreadRequestDto> threadsResponse = List.of(new DesignThreadRequestDto(1, new BigDecimal(10)));
+        CreateDesignDto updateDto = new CreateDesignDto("Sunflowers Updated", 1, DesignStatus.IN_PROGRESS, threadsResponse);
         DesignerResponseDto designerDto = new DesignerResponseDto(1, "Dimensions");
-        DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers Updated", designerDto, DesignStatus.IN_PROGRESS);
+        List<DesignThreadResponseDto> threads = List.of(
+                new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10))
+        );
+        DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers Updated", designerDto, DesignStatus.IN_PROGRESS, threads);
 
         when(service.update(1, updateDto)).thenReturn(responseDto);
 

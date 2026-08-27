@@ -8,12 +8,17 @@ import yosadchuk.needle.flow.exception.ResourceNotFoundException;
 import yosadchuk.needle.flow.mapper.DesignMapper;
 import yosadchuk.needle.flow.model.dto.CreateDesignDto;
 import yosadchuk.needle.flow.model.dto.DesignResponseDto;
+import yosadchuk.needle.flow.model.dto.DesignThreadRequestDto;
 import yosadchuk.needle.flow.model.entity.Design;
+import yosadchuk.needle.flow.model.entity.DesignThread;
 import yosadchuk.needle.flow.model.entity.Designer;
+import yosadchuk.needle.flow.model.entity.Thread;
 import yosadchuk.needle.flow.repository.DesignRepository;
 import yosadchuk.needle.flow.repository.DesignerRepository;
+import yosadchuk.needle.flow.repository.ThreadRepository;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,14 +27,15 @@ public class DesignService {
 
     private final DesignRepository designRepository;
     private final DesignerRepository designerRepository;
+    private final ThreadRepository threadRepository;
     private final DesignMapper designMapper;
 
     public List<DesignResponseDto> findAll() {
-        return designRepository.findAll().stream().map(designMapper::toDto).toList();
+        return designRepository.findAllWithDetails().stream().map(designMapper::toDto).toList();
     }
 
     public DesignResponseDto findById(Integer id) {
-        return designRepository.findById(id).map(designMapper::toDto)
+        return designRepository.findByIdWithDetails(id).map(designMapper::toDto)
                 .orElseThrow(() -> new ResourceNotFoundException("Design with id " + id + " not found"));
     }
 
@@ -43,6 +49,16 @@ public class DesignService {
                 .orElseThrow(() -> new ResourceNotFoundException("Designer with id " + dto.designer() + " not found"));
         Design entity = designMapper.toEntity(dto);
         entity.setDesigner(designer);
+
+        if (entity.getThreads() == null) {
+            entity.setThreads(new ArrayList<>());
+        }
+
+        if (dto.threads() != null && !dto.threads().isEmpty()) {
+            List<DesignThread> designThreads = getDesignThreadsList(dto, entity);
+            entity.getThreads().addAll(designThreads);
+        }
+
         return designMapper.toDto(designRepository.save(entity));
     }
 
@@ -58,7 +74,13 @@ public class DesignService {
             throw new ResourceAlreadyExistsException("Design with name " + dto.name() + " for designer already exists");
         }
 
-        designMapper.updateEntityFromDto(dto, entity);
+        List<Integer> threadsIds = dto.threads().stream()
+                .map(DesignThreadRequestDto::threadId)
+                .toList();
+        Map<Integer, Thread> threadsMap = threadRepository.findAllById(threadsIds).stream()
+                .collect(Collectors.toMap(Thread::getId, t -> t));
+
+        designMapper.updateEntityFromDto(dto, entity, threadsMap);
         if (!entity.getDesigner().getId().equals(dto.designer())) {
             Designer designer = designerRepository.findById(dto.designer())
                     .orElseThrow(() -> new ResourceNotFoundException("Designer with id " + dto.designer() + " not found"));
@@ -74,5 +96,18 @@ public class DesignService {
         }
 
         designRepository.deleteById(id);
+    }
+
+    private List<DesignThread> getDesignThreadsList(CreateDesignDto dto, Design entity){
+        return dto.threads().stream().map(threadDto -> {
+            Thread thread = threadRepository.findById(threadDto.threadId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Thread with id " + threadDto.threadId() + " not found"));
+
+            DesignThread designThread = new DesignThread();
+            designThread.setDesign(entity);
+            designThread.setThread(thread);
+            designThread.setRequiredMeters(threadDto.requiredMeters());
+            return designThread;
+        }).toList();
     }
 }
