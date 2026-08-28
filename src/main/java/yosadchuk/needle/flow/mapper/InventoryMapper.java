@@ -12,6 +12,7 @@ public class InventoryMapper {
                 .id(entity.getId())
                 .skeinsQuantity(entity.getSkeinQuantity())
                 .bobbinMeters(entity.getBobbinQuantity())
+                .totalMeters(entity.getSkeinQuantity() * 8.0 + entity.getBobbinQuantity())
                 .build();
     }
 }
