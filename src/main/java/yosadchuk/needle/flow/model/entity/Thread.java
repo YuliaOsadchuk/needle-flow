@@ -21,4 +21,7 @@ public class Thread {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manufacturer_id")
     private Manufacturer manufacturer;
+
+    @OneToOne(mappedBy = "thread", cascade = CascadeType.ALL)
+    private Inventory inventory;
 }

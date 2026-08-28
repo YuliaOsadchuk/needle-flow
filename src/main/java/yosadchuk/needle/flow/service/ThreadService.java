@@ -8,8 +8,10 @@ import yosadchuk.needle.flow.exception.ResourceNotFoundException;
 import yosadchuk.needle.flow.mapper.ThreadMapper;
 import yosadchuk.needle.flow.model.dto.CreateThreadDto;
 import yosadchuk.needle.flow.model.dto.ThreadResponseDto;
+import yosadchuk.needle.flow.model.entity.Inventory;
 import yosadchuk.needle.flow.model.entity.Manufacturer;
 import yosadchuk.needle.flow.model.entity.Thread;
+import yosadchuk.needle.flow.repository.InventoryRepository;
 import yosadchuk.needle.flow.repository.ManufacturerRepository;
 import yosadchuk.needle.flow.repository.ThreadRepository;
 
@@ -21,6 +23,7 @@ import java.util.List;
 public class ThreadService {
     private final ThreadRepository threadRepository;
     private final ManufacturerRepository manufacturerRepository;
+    private final InventoryRepository inventoryRepository;
     private final ThreadMapper mapper;
 
     public List<ThreadResponseDto> findAll() {
@@ -43,8 +46,17 @@ public class ThreadService {
 
         Thread entity = mapper.toEntity(dto);
         entity.setManufacturer(manufacturer);
+        threadRepository.save(entity);
 
-        return mapper.toDto(threadRepository.save(entity));
+        Inventory inventory = new Inventory();
+        inventory.setThread(entity);
+        inventory.setBobbinQuantity(0.0);
+        inventory.setSkeinQuantity(0);
+
+        inventoryRepository.save(inventory);
+        entity.setInventory(inventory);
+
+        return mapper.toDto(entity);
     }
 
     @Transactional

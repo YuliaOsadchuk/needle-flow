@@ -114,11 +114,10 @@
                         <div class="text-xs font-semibold text-stone-400 uppercase tracking-wider">Необхідні нитки:
                         </div>
                         <div v-if="d.threads && d.threads.length > 0" class="flex flex-wrap gap-1.5">
-        <span v-for="dt in d.threads" :key="dt.threadId || dt.id"
-              class="px-2 py-1 bg-stone-100 text-stone-700 rounded-md text-xs font-medium border border-stone-200/60">
-            #{{ dt.thread?.code || dt.threadCode || dt.code }} <span class="text-stone-400">({{ dt.requiredMeters
-            }}м)</span>
-        </span>
+                            <span v-for="dt in d.threads" :key="dt.threadId || dt.id"
+                                  class="px-2 py-1 bg-stone-100 text-stone-700 rounded-md text-xs font-medium border border-stone-200/60">
+                                #{{ dt.thread?.code || dt.threadCode || dt.code }} <span class="text-stone-400">({{ dt.requiredMeters }}м)</span>
+                            </span>
                         </div>
                         <p v-else class="text-xs text-stone-400 italic">Нитки ще не додані</p>
                     </div>
@@ -223,12 +222,34 @@
                     <div class="flex items-baseline gap-2 mb-1">
                         <span class="text-2xl font-black text-stone-900 tracking-tight">#{{ t.code }}</span>
                     </div>
-                    <p class="text-sm text-stone-600 line-clamp-1 mb-4">{{ t.name }}</p>
+                    <p class="text-sm text-stone-600 line-clamp-1 mb-3">{{ t.name }}</p>
+
+                    <!-- Інформація про запаси -->
+                    <div class="bg-stone-50 p-2.5 rounded-xl border border-stone-100 text-xs space-y-1 mb-2">
+                        <div class="flex justify-between text-stone-600">
+                            <span>Мотків:</span>
+                            <strong class="text-stone-900">{{ t.inventory?.skeinsQuantity || 0 }} шт.</strong>
+                        </div>
+                        <div class="flex justify-between text-stone-600">
+                            <span>Залишок на бобіні:</span>
+                            <strong class="text-stone-900">{{ t.inventory?.bobbinMeters || 0 }} м</strong>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
                     <span>ID: {{ t.id }}</span>
-                    <span class="text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full">В наявності</span>
+                    <div class="flex items-center gap-1">
+                        <button @click="openInventoryModal(t, 'add')"
+                                class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 rounded-lg font-medium transition">
+                            + Поповнити
+                        </button>
+                        <button @click="openInventoryModal(t, 'update')"
+                                title="Встановити точний залишок"
+                                class="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition">
+                            ✏️
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -321,7 +342,7 @@
                                     class="flex-1 px-2.5 py-1.5 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20">
                                 <option :value="null" disabled>Нитка...</option>
                                 <option v-for="t in threads" :key="t.id" :value="t.id">
-                                    #{{ t.code }} - {{ t.name }} ({{ t.manufacturer ? t.manufacturer.name : '' }})
+                                    #{{ t.code }} - {{ t.name }} [Є: {{ t.inventory?.skeinsQuantity || 0 }} мот.]
                                 </option>
                             </select>
 
@@ -452,6 +473,65 @@
         </div>
     </div>
 
+    <!-- МОДАЛКА ІНВЕНТАРЮ -->
+    <div v-if="showInventoryModal" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl border border-stone-100">
+            <h3 class="text-lg font-bold text-stone-900 mb-4">Запаси нитки {{ selectedThreadForInventory?.code }}</h3>
+
+            <!-- Таби: Додати чи Оновити -->
+            <div class="flex border-b border-stone-200 mb-4">
+                <button
+                        @click="inventoryMode = 'add'"
+                        :class="['pb-2 px-4 text-sm font-medium border-b-2 transition-colors', inventoryMode === 'add' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-stone-500 hover:text-stone-800']"
+                >
+                    + Поповнити
+                </button>
+                <button
+                        @click="inventoryMode = 'update'"
+                        :class="['pb-2 px-4 text-sm font-medium border-b-2 transition-colors', inventoryMode === 'update' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-stone-500 hover:text-stone-800']"
+                >
+                    ✏️ Встановити залишок
+                </button>
+            </div>
+
+            <form @submit.prevent="saveInventory" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-stone-600 uppercase mb-1">
+                        {{ inventoryMode === 'add' ? 'Додати мотків (шт)' : 'Точний залишок мотків (шт)' }}
+                    </label>
+                    <input
+                            v-model.number="inventoryForm.skeins"
+                            type="number"
+                            min="0"
+                            class="w-full px-3 py-2 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-stone-600 uppercase mb-1">
+                        {{ inventoryMode === 'add' ? 'Додати на бобіну (м)' : 'Точний залишок на бобіні (м)' }}
+                    </label>
+                    <input
+                            v-model.number="inventoryForm.meters"
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            class="w-full px-3 py-2 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+                    />
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-stone-100">
+                    <button type="button" @click="showInventoryModal = false" class="px-4 py-2 text-sm text-stone-600 hover:bg-stone-100 rounded-xl transition">
+                        Скасувати
+                    </button>
+                    <button type="submit" class="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl transition">
+                        Зберегти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -461,7 +541,7 @@
         setup() {
             const API_BASE = '/api/v1';
 
-            const currentTab = ref('designs');
+            const currentTab = ref('threads');
             const threads = ref([]);
             const manufacturers = ref([]);
             const designers = ref([]);
@@ -491,6 +571,15 @@
 
             const designModal = ref({show: false, isEdit: false, id: null});
             const designForm = ref({title: '', designerId: null, threads: []});
+
+            // Inventory State
+            const showInventoryModal = ref(false);
+            const selectedThreadForInventory = ref(null);
+            const inventoryMode = ref('add'); // 'add' або 'update'
+            const inventoryForm = ref({
+                skeins: 0,
+                meters: 0
+            });
 
             // API Calls
             const fetchThreads = async () => {
@@ -573,10 +662,9 @@
                 if (d) {
                     designModal.value = {show: true, isEdit: true, id: d.id};
                     designForm.value = {
-                        title: d.name || d.title, // <-- Перевірка на d.name!
+                        title: d.name || d.title,
                         designerId: d.designer ? d.designer.id : null,
                         status: d.status || 'IN_PROGRESS',
-                        // Перевіряємо t.threadId або t.thread?.id залежно від мапера бекенду
                         threads: d.threads ? d.threads.map(t => ({
                             threadId: t.threadId || t.thread?.id || t.id,
                             requiredMeters: t.requiredMeters
@@ -721,6 +809,43 @@
                 }
             };
 
+            // Inventory Actions
+            const openInventoryModal = (thread, mode = 'add') => {
+                selectedThreadForInventory.value = thread;
+                inventoryMode.value = mode;
+
+                if (mode === 'add') {
+                    inventoryForm.value = { skeins: 1, meters: 0 };
+                } else {
+                    inventoryForm.value = {
+                        skeins: thread.inventory?.skeinsQuantity || 0,
+                        meters: thread.inventory?.bobbinMeters || 0
+                    };
+                }
+                showInventoryModal.value = true;
+            };
+
+            const saveInventory = async () => {
+                try {
+                    const endpoint = inventoryMode.value === 'add'
+                        ? `${API_BASE}/inventory/add`
+                        : `${API_BASE}/inventory/update`;
+
+                    await axios.post(endpoint, {
+                        threadId: selectedThreadForInventory.value.id,
+                        addSkeins: inventoryForm.value.skeins,
+                        addBobbinMeters: inventoryForm.value.meters
+                    });
+
+                    showInventoryModal.value = false;
+                    showToast(inventoryMode.value === 'add' ? 'Запас поповнено' : 'Залишки оновлено');
+                    await fetchThreads();
+                } catch (e) {
+                    showToast('Помилка збереження інвентарю', true);
+                    console.error("Помилка збереження інвентарю", e);
+                }
+            };
+
             // Computed Filters
             const filteredThreads = computed(() => {
                 return threads.value.filter(t => {
@@ -786,7 +911,13 @@
                 addThreadToDesignForm,
                 removeThreadFromDesignForm,
                 saveDesign,
-                deleteDesign
+                deleteDesign,
+                showInventoryModal,
+                selectedThreadForInventory,
+                inventoryMode,
+                inventoryForm,
+                openInventoryModal,
+                saveInventory
             };
         }
     }).mount('#app');

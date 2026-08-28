@@ -25,7 +25,7 @@ CREATE TABLE inventory
 (
     id              SERIAL PRIMARY KEY NOT NULL,
     thread_id       INTEGER            NOT NUll UNIQUE REFERENCES thread (id),
-    skein_quantity  DOUBLE PRECISION   NOT NULL DEFAULT 0.0,
+    skein_quantity  INTEGER            NOT NULL DEFAULT 0.0,
     bobbin_quantity DOUBLE PRECISION   NOT NULL DEFAULT 0.0
 );
 

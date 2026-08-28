@@ -11,6 +11,7 @@ import yosadchuk.needle.flow.model.entity.Thread;
 public class ThreadMapper {
 
     private final ManufacturerMapper manufacturerMapper;
+    private final InventoryMapper inventoryMapper;
 
     public ThreadResponseDto toDto(Thread entity) {
         if (entity == null) return null;
@@ -19,6 +20,7 @@ public class ThreadMapper {
                 .code(entity.getCode())
                 .name(entity.getName())
                 .manufacturer(manufacturerMapper.toDto(entity.getManufacturer()))
+                .inventory(inventoryMapper.toDto(entity.getInventory()))
                 .build();
     }
 

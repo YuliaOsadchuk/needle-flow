@@ -17,7 +17,7 @@ public class Inventory {
     @JoinColumn(name = "thread_id")
     private Thread thread;
 
-    private double skeinQuantity;
+    private Integer skeinQuantity;
 
-    private double bobbinQuantity;
+    private Double bobbinQuantity;
 }
