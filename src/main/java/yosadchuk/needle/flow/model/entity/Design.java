@@ -27,4 +27,7 @@ public class Design {
 
     @OneToMany(mappedBy = "design", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DesignThread> threads;
+
+    @Column(name = "image_url")
+    private String imageUrl;
 }

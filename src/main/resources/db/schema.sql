@@ -26,7 +26,7 @@ CREATE TABLE inventory
     id              SERIAL PRIMARY KEY NOT NULL,
     thread_id       INTEGER            NOT NUll UNIQUE REFERENCES thread (id),
     skein_quantity  INTEGER            NOT NULL DEFAULT 0.0,
-    bobbin_quantity NUMERIC   NOT NULL DEFAULT 0.0
+    bobbin_quantity NUMERIC            NOT NULL DEFAULT 0.0
 );
 
 CREATE TABLE designer
@@ -41,6 +41,7 @@ CREATE TABLE design
     name        varchar            NOT NULL,
     designer_id INTEGER            NOT NULL REFERENCES designer (id),
     status      varchar            NOT NULL,
+    image_url   varchar,
     UNIQUE (name, designer_id)
 );
 

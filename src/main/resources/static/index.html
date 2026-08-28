@@ -90,50 +90,59 @@
         <div v-if="filteredDesigns.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <div v-for="d in filteredDesigns" :key="d.id"
                  :class="isDesignReady(d) ? 'bg-emerald-50/40 border-emerald-300 ring-1 ring-emerald-300/50' : 'bg-white border-stone-200/80'"
-                 class="border rounded-2xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between group">
-                <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="px-2.5 py-1 bg-stone-100 text-stone-700 rounded-lg text-xs font-semibold">
-                            🎨 {{ d.designer ? d.designer.name : (d.designerName || 'Без автора') }}
-                        </span>
+                 class="border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between group">
 
-                        <!-- Status Badge -->
+                <div>
+                    <!-- Design Cover Image -->
+                    <div class="h-48 w-full bg-stone-100 border-b border-stone-100 relative overflow-hidden flex items-center justify-center">
+                        <img v-if="d.url" :src="d.url" :alt="d.name || d.title" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                        <div v-else class="text-4xl text-stone-300 select-none">🖼️</div>
+
+                        <!-- Status Badge Overlay -->
                         <span v-if="isDesignReady(d)"
-                              class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold flex items-center gap-1">
+                              class="absolute top-3 right-3 px-2.5 py-1 bg-emerald-500/90 backdrop-blur-md text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-1">
                             ✅ Готовий
                         </span>
                         <span v-else
-                              class="px-2.5 py-1 bg-stone-100 text-stone-500 rounded-lg text-xs">
+                              class="absolute top-3 right-3 px-2.5 py-1 bg-stone-900/60 backdrop-blur-md text-white rounded-lg text-xs font-medium shadow-sm">
                             🧵 Потрібні нитки
                         </span>
                     </div>
 
-                    <h3 class="text-lg font-bold text-stone-900 mb-4">{{ d.name || d.title }}</h3>
-
-                    <!-- Quick Threads Preview -->
-                    <div class="space-y-2">
-                        <div class="text-xs font-semibold text-stone-400 uppercase tracking-wider">Необхідні нитки:</div>
-                        <div v-if="d.threads && d.threads.length > 0" class="flex flex-wrap gap-1.5 items-center">
-                            <span v-for="dt in getVisibleThreads(d)" :key="dt.threadId || dt.id"
-                                  :class="isThreadSufficient(dt) ? 'bg-emerald-100/70 text-emerald-900 border-emerald-300/60' : 'bg-stone-100 text-stone-700 border-stone-200/60'"
-                                  class="px-2 py-1 rounded-md text-xs font-medium border flex items-center gap-1">
-                                <span>{{ isThreadSufficient(dt) ? '✓' : '•' }}</span>
-                                #{{ dt.thread?.code || dt.threadCode || dt.code }}
-                                <span class="text-stone-400">({{ dt.requiredMeters }}м)</span>
+                    <div class="p-5 pb-0">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="px-2.5 py-1 bg-stone-100 text-stone-700 rounded-lg text-xs font-semibold">
+                                🎨 {{ d.designer ? d.designer.name : (d.designerName || 'Без автора') }}
                             </span>
-
-                            <!-- Toggle Expand / Collapse Button -->
-                            <button v-if="d.threads.length > 6"
-                                    @click="toggleExpandDesign(d.id)"
-                                    class="px-2 py-1 bg-stone-200/70 hover:bg-stone-200 text-stone-700 rounded-md text-xs font-semibold transition border border-stone-300/60">
-                                {{ expandedDesignIds.includes(d.id) ? 'Згорнути' : `+${d.threads.length - 6} ще` }}
-                            </button>
                         </div>
-                        <p v-else class="text-xs text-stone-400 italic">Нитки ще не додані</p>
+
+                        <h3 class="text-lg font-bold text-stone-900 mb-4">{{ d.name || d.title }}</h3>
+
+                        <!-- Quick Threads Preview -->
+                        <div class="space-y-2">
+                            <div class="text-xs font-semibold text-stone-400 uppercase tracking-wider">Необхідні нитки:</div>
+                            <div v-if="d.threads && d.threads.length > 0" class="flex flex-wrap gap-1.5 items-center">
+                                <span v-for="dt in getVisibleThreads(d)" :key="dt.threadId || dt.id"
+                                      :class="isThreadSufficient(dt) ? 'bg-emerald-100/70 text-emerald-900 border-emerald-300/60' : 'bg-stone-100 text-stone-700 border-stone-200/60'"
+                                      class="px-2 py-1 rounded-md text-xs font-medium border flex items-center gap-1">
+                                    <span>{{ isThreadSufficient(dt) ? '✓' : '•' }}</span>
+                                    #{{ dt.thread?.code || dt.threadCode || dt.code }}
+                                    <span class="text-stone-400">({{ dt.requiredMeters }}м)</span>
+                                </span>
+
+                                <!-- Toggle Expand / Collapse Button -->
+                                <button v-if="d.threads.length > 6"
+                                        @click="toggleExpandDesign(d.id)"
+                                        class="px-2 py-1 bg-stone-200/70 hover:bg-stone-200 text-stone-700 rounded-md text-xs font-semibold transition border border-stone-300/60">
+                                    {{ expandedDesignIds.includes(d.id) ? 'Згорнути' : `+${d.threads.length - 6} ще` }}
+                                </button>
+                            </div>
+                            <p v-else class="text-xs text-stone-400 italic">Нитки ще не додані</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="pt-4 mt-4 border-t border-stone-100/80 flex items-center justify-between gap-2">
+                <div class="p-5 pt-4 mt-4 border-t border-stone-100/80 flex items-center justify-between gap-2">
                     <button @click="openDesignDetailsModal(d)"
                             class="px-3 py-1.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
                         📋 Палітра ({{ d.threads ? d.threads.length : 0 }})
@@ -418,6 +427,24 @@
                     </select>
                 </div>
 
+                <!-- Image Upload Input -->
+                <div>
+                    <label class="block text-xs font-semibold text-stone-600 uppercase mb-1">Обкладинка дизайну</label>
+                    <div class="flex items-center gap-3">
+                        <input type="file" ref="imageInput" accept="image/*" @change="handleImageSelect"
+                               class="block w-full text-xs text-stone-500
+                                 file:mr-3 file:py-2 file:px-3
+                                 file:rounded-xl file:border-0
+                                 file:text-xs file:font-semibold
+                                 file:bg-rose-50 file:text-rose-600
+                                 hover:file:bg-rose-100 cursor-pointer">
+                    </div>
+                    <!-- Image Preview -->
+                    <div v-if="selectedImagePreview || designForm.url" class="mt-2 h-32 w-full rounded-xl overflow-hidden border border-stone-200 bg-stone-50 flex items-center justify-center">
+                        <img :src="selectedImagePreview || designForm.url" class="h-full w-full object-cover">
+                    </div>
+                </div>
+
                 <!-- Dynamic Threads Section -->
                 <div class="pt-2">
                     <div class="flex items-center justify-between mb-2">
@@ -682,7 +709,10 @@
             const designerForm = ref({name: ''});
 
             const designModal = ref({show: false, isEdit: false, id: null});
-            const designForm = ref({title: '', designerId: null, threads: []});
+            const designForm = ref({title: '', designerId: null, url: null, threads: []});
+            const selectedImageFile = ref(null);
+            const selectedImagePreview = ref(null);
+            const imageInput = ref(null);
 
             const detailsModal = ref({show: false, design: {}});
 
@@ -811,13 +841,27 @@
                 }
             };
 
+            // Image handling
+            const handleImageSelect = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    selectedImageFile.value = file;
+                    selectedImagePreview.value = URL.createObjectURL(file);
+                }
+            };
+
             // Design Actions
             const openDesignModal = (d = null) => {
+                selectedImageFile.value = null;
+                selectedImagePreview.value = null;
+                if (imageInput.value) imageInput.value.value = '';
+
                 if (d) {
                     designModal.value = {show: true, isEdit: true, id: d.id};
                     designForm.value = {
                         title: d.name || d.title,
                         designerId: d.designer ? d.designer.id : null,
+                        url: d.url || null,
                         status: d.status || 'IN_PROGRESS',
                         threads: d.threads ? d.threads.map(t => ({
                             threadId: t.threadId || t.thread?.id || t.id,
@@ -829,6 +873,7 @@
                     designForm.value = {
                         title: '',
                         designerId: designers.value[0]?.id || null,
+                        url: null,
                         status: 'IN_PROGRESS',
                         threads: []
                     };
@@ -861,13 +906,26 @@
                         }))
                     };
 
+                    let savedDesignResponse;
                     if (designModal.value.isEdit) {
-                        await axios.put(`${API_BASE}/designs/${designModal.value.id}`, payload);
+                        savedDesignResponse = await axios.put(`${API_BASE}/designs/${designModal.value.id}`, payload);
                         showToast('Дизайн оновлено');
                     } else {
-                        await axios.post(`${API_BASE}/designs`, payload);
+                        savedDesignResponse = await axios.post(`${API_BASE}/designs`, payload);
                         showToast('Дизайн створено');
                     }
+
+                    const designId = savedDesignResponse.data.id || designModal.value.id;
+
+                    // If a image file was picked, upload it separately
+                    if (selectedImageFile.value && designId) {
+                        const formData = new FormData();
+                        formData.append('file', selectedImageFile.value);
+                        await axios.post(`${API_BASE}/designs/${designId}/image`, formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' }
+                        });
+                    }
+
                     designModal.value.show = false;
                     fetchDesigns();
                 } catch (err) {
@@ -1064,6 +1122,10 @@
                 designerForm,
                 designModal,
                 designForm,
+                selectedImageFile,
+                selectedImagePreview,
+                imageInput,
+                handleImageSelect,
                 detailsModal,
                 openDesignDetailsModal,
                 getAvailableMeters,

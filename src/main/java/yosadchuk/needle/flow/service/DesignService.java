@@ -1,6 +1,7 @@
 package yosadchuk.needle.flow.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import yosadchuk.needle.flow.exception.ResourceAlreadyExistsException;
@@ -17,9 +18,14 @@ import yosadchuk.needle.flow.repository.DesignRepository;
 import yosadchuk.needle.flow.repository.DesignerRepository;
 import yosadchuk.needle.flow.repository.ThreadRepository;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -91,14 +97,35 @@ public class DesignService {
 
     @Transactional
     public void delete(Integer id) {
-        if (!designRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Design with id " + id + " not found");
+        Design design = designRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Design with id " + id + " not found"));
+
+        if (design.getImageUrl() != null) {
+            deleteImageFile(design.getImageUrl());
         }
 
         designRepository.deleteById(id);
     }
 
-    private List<DesignThread> getDesignThreadsList(CreateDesignDto dto, Design entity){
+    @Transactional
+    public DesignResponseDto updateImageUrl(Integer id, String imagePath) {
+        Design entity = designRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Design with id " + id + " not found"));
+
+        entity.setImageUrl(imagePath);
+        return designMapper.toDto(entity);
+    }
+
+    private void deleteImageFile(String imagePath) {
+        try {
+        String fileName = Paths.get(imagePath).getFileName().toString();
+            Path filePath = Paths.get("uploads", "designs", fileName).toAbsolutePath().normalize();
+            Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            log.error("Не вдалося видалити файл зображення за шляхом: {}", imagePath, e);
+        }
+    }
+
+    private List<DesignThread> getDesignThreadsList(CreateDesignDto dto, Design entity) {
         return dto.threads().stream().map(threadDto -> {
             Thread thread = threadRepository.findById(threadDto.threadId())
                     .orElseThrow(() -> new ResourceNotFoundException("Thread with id " + threadDto.threadId() + " not found"));

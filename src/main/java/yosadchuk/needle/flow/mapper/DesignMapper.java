@@ -40,6 +40,7 @@ public class DesignMapper {
                 .status(entity.getStatus())
                 .threads(threadDto)
                 .canBeStarted(canBeStarted)
+                .url(entity.getImageUrl())
                 .build();
     }
 
