@@ -15,6 +15,8 @@ import yosadchuk.needle.flow.exception.ResourceNotFoundException;
 import yosadchuk.needle.flow.model.dto.AddInventoryRequestDto;
 import yosadchuk.needle.flow.service.InventoryService;
 
+import java.math.BigDecimal;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -35,7 +37,7 @@ public class InventoryControllerTest {
 
     @BeforeEach
     void setUp() {
-        validDto = new AddInventoryRequestDto(1, 2, 5.5);
+        validDto = new AddInventoryRequestDto(1, 2, new BigDecimal("5.5"));
     }
 
     @Nested
@@ -105,7 +107,7 @@ public class InventoryControllerTest {
         @Test
         @DisplayName("Should return 400 Bad Request when validation fails in service")
         void updateStock_BadRequest() throws Exception {
-            AddInventoryRequestDto invalidDto = new AddInventoryRequestDto(1, null, 10.0);
+            AddInventoryRequestDto invalidDto = new AddInventoryRequestDto(1, null, BigDecimal.TEN);
             doThrow(new BadRequestException("One of the fields must be filled in"))
                     .when(inventoryService).updateStock(any(AddInventoryRequestDto.class));
 

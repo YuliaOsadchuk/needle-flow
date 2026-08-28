@@ -3,6 +3,8 @@ package yosadchuk.needle.flow.model.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,5 +21,5 @@ public class Inventory {
 
     private Integer skeinQuantity;
 
-    private Double bobbinQuantity;
+    private BigDecimal bobbinQuantity;
 }

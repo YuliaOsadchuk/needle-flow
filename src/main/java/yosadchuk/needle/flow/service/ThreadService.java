@@ -15,6 +15,7 @@ import yosadchuk.needle.flow.repository.InventoryRepository;
 import yosadchuk.needle.flow.repository.ManufacturerRepository;
 import yosadchuk.needle.flow.repository.ThreadRepository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -50,7 +51,7 @@ public class ThreadService {
 
         Inventory inventory = new Inventory();
         inventory.setThread(entity);
-        inventory.setBobbinQuantity(0.0);
+        inventory.setBobbinQuantity(BigDecimal.ZERO);
         inventory.setSkeinQuantity(0);
 
         inventoryRepository.save(inventory);

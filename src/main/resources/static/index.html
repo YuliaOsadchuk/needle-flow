@@ -89,43 +89,66 @@
 
         <div v-if="filteredDesigns.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <div v-for="d in filteredDesigns" :key="d.id"
-                 class="bg-white border border-stone-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between group">
+                 :class="isDesignReady(d) ? 'bg-emerald-50/40 border-emerald-300 ring-1 ring-emerald-300/50' : 'bg-white border-stone-200/80'"
+                 class="border rounded-2xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between group">
                 <div>
                     <div class="flex items-center justify-between mb-3">
-                        <span class="px-2.5 py-1 bg-rose-50 text-rose-700 rounded-lg text-xs font-semibold">
-                            🎨 {{ d.designer ? d.designer.name : 'Без автора' }}
+                        <span class="px-2.5 py-1 bg-stone-100 text-stone-700 rounded-lg text-xs font-semibold">
+                            🎨 {{ d.designer ? d.designer.name : (d.designerName || 'Без автора') }}
                         </span>
-                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                            <button @click="openDesignModal(d)"
-                                    class="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100"
-                                    title="Редагувати">✏️
-                            </button>
-                            <button @click="deleteDesign(d.id)"
-                                    class="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-100"
-                                    title="Видалити">🗑️
-                            </button>
-                        </div>
+
+                        <!-- Status Badge -->
+                        <span v-if="isDesignReady(d)"
+                              class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold flex items-center gap-1">
+                            ✅ Готовий
+                        </span>
+                        <span v-else
+                              class="px-2.5 py-1 bg-stone-100 text-stone-500 rounded-lg text-xs">
+                            🧵 Потрібні нитки
+                        </span>
                     </div>
 
                     <h3 class="text-lg font-bold text-stone-900 mb-4">{{ d.name || d.title }}</h3>
 
-                    <!-- Design Threads List -->
+                    <!-- Quick Threads Preview -->
                     <div class="space-y-2">
-                        <div class="text-xs font-semibold text-stone-400 uppercase tracking-wider">Необхідні нитки:
-                        </div>
-                        <div v-if="d.threads && d.threads.length > 0" class="flex flex-wrap gap-1.5">
-                            <span v-for="dt in d.threads" :key="dt.threadId || dt.id"
-                                  class="px-2 py-1 bg-stone-100 text-stone-700 rounded-md text-xs font-medium border border-stone-200/60">
-                                #{{ dt.thread?.code || dt.threadCode || dt.code }} <span class="text-stone-400">({{ dt.requiredMeters }}м)</span>
+                        <div class="text-xs font-semibold text-stone-400 uppercase tracking-wider">Необхідні нитки:</div>
+                        <div v-if="d.threads && d.threads.length > 0" class="flex flex-wrap gap-1.5 items-center">
+                            <span v-for="dt in getVisibleThreads(d)" :key="dt.threadId || dt.id"
+                                  :class="isThreadSufficient(dt) ? 'bg-emerald-100/70 text-emerald-900 border-emerald-300/60' : 'bg-stone-100 text-stone-700 border-stone-200/60'"
+                                  class="px-2 py-1 rounded-md text-xs font-medium border flex items-center gap-1">
+                                <span>{{ isThreadSufficient(dt) ? '✓' : '•' }}</span>
+                                #{{ dt.thread?.code || dt.threadCode || dt.code }}
+                                <span class="text-stone-400">({{ dt.requiredMeters }}м)</span>
                             </span>
+
+                            <!-- Toggle Expand / Collapse Button -->
+                            <button v-if="d.threads.length > 6"
+                                    @click="toggleExpandDesign(d.id)"
+                                    class="px-2 py-1 bg-stone-200/70 hover:bg-stone-200 text-stone-700 rounded-md text-xs font-semibold transition border border-stone-300/60">
+                                {{ expandedDesignIds.includes(d.id) ? 'Згорнути' : `+${d.threads.length - 6} ще` }}
+                            </button>
                         </div>
                         <p v-else class="text-xs text-stone-400 italic">Нитки ще не додані</p>
                     </div>
                 </div>
 
-                <div class="pt-4 mt-4 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
-                    <span>ID: {{ d.id }}</span>
-                    <span>Кількість ниток: <strong>{{ d.threads ? d.threads.length : 0 }}</strong></span>
+                <div class="pt-4 mt-4 border-t border-stone-100/80 flex items-center justify-between gap-2">
+                    <button @click="openDesignDetailsModal(d)"
+                            class="px-3 py-1.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                        📋 Палітра ({{ d.threads ? d.threads.length : 0 }})
+                    </button>
+
+                    <div class="flex items-center gap-1">
+                        <button @click="openDesignModal(d)"
+                                class="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100"
+                                title="Редагувати">✏️
+                        </button>
+                        <button @click="deleteDesign(d.id)"
+                                class="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-100"
+                                title="Видалити">🗑️
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -306,6 +329,71 @@
         </div>
     </main>
 
+    <!-- ================= MODAL: DESIGN DETAILS & PALETTE ================= -->
+    <div v-if="detailsModal.show"
+         class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-stone-100 max-h-[85vh] flex flex-col">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b border-stone-100 pb-4 mb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-stone-900">{{ detailsModal.design.name || detailsModal.design.title }}</h3>
+                    <p class="text-xs text-stone-500">
+                        Дизайнер: {{ detailsModal.design.designer ? detailsModal.design.designer.name : (detailsModal.design.designerName || 'Не вказано') }}
+                    </p>
+                </div>
+                <span v-if="isDesignReady(detailsModal.design)"
+                      class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold">
+                    ✅ Усі нитки в наявності
+                </span>
+                <span v-else class="px-3 py-1 bg-stone-100 text-stone-600 rounded-lg text-xs font-semibold">
+                    ⚠️ Потрібно докупити нитки
+                </span>
+            </div>
+
+            <!-- Scrollable Thread List -->
+            <div class="overflow-y-auto flex-1 pr-1 space-y-2">
+                <div v-for="dt in detailsModal.design.threads" :key="dt.threadId || dt.id"
+                     :class="isThreadSufficient(dt) ? 'bg-emerald-50/60 border-emerald-200' : 'bg-rose-50/40 border-rose-200'"
+                     class="p-3 rounded-xl border flex items-center justify-between text-sm transition">
+
+                    <div class="flex items-center gap-3">
+                        <span class="text-base">{{ isThreadSufficient(dt) ? '✅' : '❌' }}</span>
+                        <div>
+                            <div class="font-bold text-stone-900">
+                                #{{ dt.thread?.code || dt.threadCode || dt.code }}
+                                <span class="font-normal text-stone-500">
+                                    ({{ dt.thread?.manufacturer?.name || dt.manufacturerName || 'Муліне' }})
+                                </span>
+                            </div>
+                            <div class="text-xs text-stone-500">{{ dt.thread?.name || dt.threadName }}</div>
+                        </div>
+                    </div>
+
+                    <div class="text-right text-xs">
+                        <div class="font-semibold text-stone-800">Потрібно: {{ dt.requiredMeters }} м</div>
+                        <div :class="isThreadSufficient(dt) ? 'text-emerald-700 font-medium' : 'text-rose-600 font-bold'">
+                            Є: {{ getAvailableMeters(dt) }} м
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="!detailsModal.design.threads || detailsModal.design.threads.length === 0"
+                     class="text-center py-8 text-stone-400 text-sm">
+                    У цьому дизайні ще немає збережених ниток.
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="pt-4 border-t border-stone-100 flex justify-end">
+                <button @click="detailsModal.show = false"
+                        class="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 text-sm rounded-xl font-medium transition">
+                    Закрити
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ================= MODAL: DESIGN ================= -->
     <div v-if="designModal.show"
          class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -342,10 +430,11 @@
                     <div v-if="designForm.threads.length > 0" class="space-y-2">
                         <div v-for="(dt, index) in designForm.threads" :key="index"
                              class="flex items-center gap-2 bg-stone-50 p-2 rounded-xl border border-stone-200/60">
+
                             <select v-model="dt.threadId" required
                                     class="flex-1 px-2.5 py-1.5 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20">
                                 <option :value="null" disabled>Нитка...</option>
-                                <option v-for="t in threads" :key="t.id" :value="t.id">
+                                <option v-for="t in getAvailableThreadsFor(index)" :key="t.id" :value="t.id">
                                     #{{ t.code }} - {{ t.name }} [Є: {{ t.inventory?.totalMeters || 0 }} м.]
                                 </option>
                             </select>
@@ -482,7 +571,6 @@
         <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl border border-stone-100">
             <h3 class="text-lg font-bold text-stone-900 mb-4">Запаси нитки {{ selectedThreadForInventory?.code }}</h3>
 
-            <!-- Таби: Додати чи Оновити -->
             <div class="flex border-b border-stone-200 mb-4">
                 <button
                         @click="inventoryMode = 'add'"
@@ -545,7 +633,7 @@
         setup() {
             const API_BASE = '/api/v1';
 
-            const currentTab = ref('threads');
+            const currentTab = ref('designs');
             const threads = ref([]);
             const manufacturers = ref([]);
             const designers = ref([]);
@@ -555,6 +643,26 @@
             const selectedManufacturerFilter = ref(null);
             const designSearch = ref('');
             const selectedDesignerFilter = ref(null);
+
+            // Expansion state for design threads preview
+            const expandedDesignIds = ref([]);
+
+            const toggleExpandDesign = (designId) => {
+                const index = expandedDesignIds.value.indexOf(designId);
+                if (index > -1) {
+                    expandedDesignIds.value.splice(index, 1);
+                } else {
+                    expandedDesignIds.value.push(designId);
+                }
+            };
+
+            const getVisibleThreads = (design) => {
+                if (!design.threads) return [];
+                if (expandedDesignIds.value.includes(design.id) || design.threads.length <= 6) {
+                    return design.threads;
+                }
+                return design.threads.slice(0, 6);
+            };
 
             // Notification System
             const toast = ref({show: false, message: '', isError: false});
@@ -576,10 +684,12 @@
             const designModal = ref({show: false, isEdit: false, id: null});
             const designForm = ref({title: '', designerId: null, threads: []});
 
+            const detailsModal = ref({show: false, design: {}});
+
             // Inventory State
             const showInventoryModal = ref(false);
             const selectedThreadForInventory = ref(null);
-            const inventoryMode = ref('add'); // 'add' або 'update'
+            const inventoryMode = ref('add');
             const inventoryForm = ref({
                 skeins: 0,
                 meters: 0
@@ -620,6 +730,46 @@
                 } catch (err) {
                     showToast('Помилка завантаження дизайнів', true);
                 }
+            };
+
+            // Helper methods for calculating thread sufficiency
+            const getAvailableMeters = (dt) => {
+                if (dt.availableMeters !== undefined && dt.availableMeters !== null) {
+                    return dt.availableMeters;
+                }
+                const threadId = dt.threadId || dt.thread?.id || dt.id;
+                const foundThread = threads.value.find(t => t.id === threadId);
+                return foundThread?.inventory?.totalMeters || 0;
+            };
+
+            const isThreadSufficient = (dt) => {
+                if (dt.isSufficient !== undefined && dt.isSufficient !== null) {
+                    return dt.isSufficient;
+                }
+                const available = getAvailableMeters(dt);
+                const required = dt.requiredMeters || 0;
+                return available >= required;
+            };
+
+            const isDesignReady = (design) => {
+                if (design.canBeStarted !== undefined && design.canBeStarted !== null) {
+                    return design.canBeStarted;
+                }
+                if (!design.threads || design.threads.length === 0) return false;
+                return design.threads.every(dt => isThreadSufficient(dt));
+            };
+
+            const openDesignDetailsModal = (design) => {
+                detailsModal.value = { show: true, design };
+            };
+
+            // Filter out already selected threads for form dropdowns
+            const getAvailableThreadsFor = (currentIndex) => {
+                const selectedThreadIds = designForm.value.threads
+                    .map((dt, idx) => idx !== currentIndex ? dt.threadId : null)
+                    .filter(id => id !== null);
+
+                return threads.value.filter(t => !selectedThreadIds.includes(t.id));
             };
 
             // Designer Actions
@@ -686,7 +836,13 @@
             };
 
             const addThreadToDesignForm = () => {
-                designForm.value.threads.push({threadId: threads.value[0]?.id || null, requiredMeters: 1.0});
+                const selectedIds = designForm.value.threads.map(t => t.threadId);
+                const availableThread = threads.value.find(t => !selectedIds.includes(t.id));
+
+                designForm.value.threads.push({
+                    threadId: availableThread ? availableThread.id : null,
+                    requiredMeters: 1.0
+                });
             };
 
             const removeThreadFromDesignForm = (index) => {
@@ -844,6 +1000,7 @@
                     showInventoryModal.value = false;
                     showToast(inventoryMode.value === 'add' ? 'Запас поповнено' : 'Залишки оновлено');
                     await fetchThreads();
+                    await fetchDesigns();
                 } catch (e) {
                     showToast('Помилка збереження інвентарю', true);
                     console.error("Помилка збереження інвентарю", e);
@@ -868,7 +1025,8 @@
                         (d.title && d.title.toLowerCase().includes(designSearch.value.toLowerCase()));
 
                     const designerMatch = !selectedDesignerFilter.value ||
-                        (d.designer && d.designer.id === selectedDesignerFilter.value);
+                        (d.designer && d.designer.id === selectedDesignerFilter.value) ||
+                        (d.designerId === selectedDesignerFilter.value);
 
                     return nameMatch && designerMatch;
                 });
@@ -893,6 +1051,10 @@
                 selectedDesignerFilter,
                 filteredThreads,
                 filteredDesigns,
+                expandedDesignIds,
+                toggleExpandDesign,
+                getVisibleThreads,
+                getAvailableThreadsFor,
                 toast,
                 threadModal,
                 threadForm,
@@ -902,6 +1064,11 @@
                 designerForm,
                 designModal,
                 designForm,
+                detailsModal,
+                openDesignDetailsModal,
+                getAvailableMeters,
+                isThreadSufficient,
+                isDesignReady,
                 openThreadModal,
                 saveThread,
                 deleteThread,

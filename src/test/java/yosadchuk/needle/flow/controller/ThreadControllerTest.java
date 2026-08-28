@@ -15,6 +15,7 @@ import yosadchuk.needle.flow.model.dto.ManufacturerResponseDto;
 import yosadchuk.needle.flow.model.dto.ThreadResponseDto;
 import yosadchuk.needle.flow.service.ThreadService;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -37,7 +38,8 @@ public class ThreadControllerTest {
 
     @Test
     void findAll_shouldReturnOkAndListOfThreads() throws Exception {
-        InventoryResponseDto mockInventoryResponseBody = new InventoryResponseDto(1, 5, 0.0, 5.0);
+        InventoryResponseDto mockInventoryResponseBody = new InventoryResponseDto(1, 5, BigDecimal.ZERO,
+                new BigDecimal("5.0"));
 
         List<ThreadResponseDto> mockResponseBody = List.of(
                 new ThreadResponseDto(10, "310", "Black", manufacturerDto, mockInventoryResponseBody),
@@ -71,7 +73,8 @@ public class ThreadControllerTest {
 
     @Test
     void findById_shouldReturnOkAndOneRecord() throws Exception {
-        InventoryResponseDto mockInventoryResponseBody = new InventoryResponseDto(1, 5, 0.0, 5.0);
+        InventoryResponseDto mockInventoryResponseBody = new InventoryResponseDto(1, 5, BigDecimal.ZERO,
+                new BigDecimal("5.0"));
         ThreadResponseDto responseDto = new ThreadResponseDto(10, "310", "Black", manufacturerDto, mockInventoryResponseBody);
 
         when(service.findById(10)).thenReturn(responseDto);
@@ -97,7 +100,8 @@ public class ThreadControllerTest {
     @Test
     void create_shouldReturnCreatedAndNewThread() throws Exception {
         CreateThreadDto createDto = new CreateThreadDto("310", "Black", 1);
-        InventoryResponseDto mockInventoryResponseBody = new InventoryResponseDto(1, 5, 0.0, 5.0);
+        InventoryResponseDto mockInventoryResponseBody = new InventoryResponseDto(1, 5, BigDecimal.ZERO,
+                new BigDecimal("5.0"));
         ThreadResponseDto responseDto = new ThreadResponseDto(10, "310", "Black", manufacturerDto, mockInventoryResponseBody);
 
         when(service.create(createDto)).thenReturn(responseDto);
@@ -141,7 +145,8 @@ public class ThreadControllerTest {
     @Test
     void update_shouldReturnOkAndUpdatedRecord() throws Exception {
         CreateThreadDto updateDto = new CreateThreadDto("310", "Black (Updated)", 1);
-        InventoryResponseDto mockInventoryResponseBody = new InventoryResponseDto(1, 5, 0.0, 5.0);
+        InventoryResponseDto mockInventoryResponseBody = new InventoryResponseDto(1, 5, BigDecimal.ZERO,
+                new BigDecimal("5.0"));
         ThreadResponseDto responseDto = new ThreadResponseDto(10, "310", "Black (Updated)", manufacturerDto,
                 mockInventoryResponseBody);
 

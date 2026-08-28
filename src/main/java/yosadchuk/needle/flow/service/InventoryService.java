@@ -24,7 +24,7 @@ public class InventoryService {
         Inventory inventory = inventoryRepository.findByThreadId(dto.threadId())
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory with thread id " + dto.threadId() + " not found"));
 
-        inventory.setBobbinQuantity(inventory.getBobbinQuantity() + dto.addBobbinMeters());
+        inventory.setBobbinQuantity(inventory.getBobbinQuantity().add(dto.addBobbinMeters()));
         inventory.setSkeinQuantity(inventory.getSkeinQuantity() + dto.addSkeins());
     }
 

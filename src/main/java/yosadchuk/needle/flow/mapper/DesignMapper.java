@@ -9,8 +9,10 @@ import yosadchuk.needle.flow.model.dto.DesignThreadRequestDto;
 import yosadchuk.needle.flow.model.dto.DesignThreadResponseDto;
 import yosadchuk.needle.flow.model.entity.Design;
 import yosadchuk.needle.flow.model.entity.DesignThread;
+import yosadchuk.needle.flow.model.entity.Inventory;
 import yosadchuk.needle.flow.model.entity.Thread;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,12 +31,15 @@ public class DesignMapper {
                 .map(this::toDesignThreadDto)
                 .toList();
 
+        boolean canBeStarted = !threadDto.isEmpty() && threadDto.stream().allMatch(DesignThreadResponseDto::isSufficient);
+
         return DesignResponseDto.builder()
                 .id(entity.getId())
                 .name(entity.getName())
                 .designer(designerMapper.toDto(entity.getDesigner()))
                 .status(entity.getStatus())
                 .threads(threadDto)
+                .canBeStarted(canBeStarted)
                 .build();
     }
 
@@ -86,12 +91,25 @@ public class DesignMapper {
 
     private DesignThreadResponseDto toDesignThreadDto(DesignThread designThread) {
         if (designThread == null) return null;
+        BigDecimal requiredThread = designThread.getRequiredMeters() != null ? designThread.getRequiredMeters() : BigDecimal.ZERO;
+
+        Inventory inventory = designThread.getThread().getInventory();
+        BigDecimal availableMeters = BigDecimal.ZERO;
+        if (inventory != null) {
+            BigDecimal availableSkeinsInMeters = new BigDecimal(inventory.getSkeinQuantity() * 8);
+            availableMeters = inventory.getBobbinQuantity().add(availableSkeinsInMeters);
+        }
+
+        boolean isSufficient =  availableMeters.compareTo(requiredThread) >=0;
+
         return new DesignThreadResponseDto(
                 designThread.getId(),
                 designThread.getThread().getId(),
                 designThread.getThread().getCode(),
                 designThread.getThread().getName(),
-                designThread.getRequiredMeters()
+                designThread.getRequiredMeters(),
+                availableMeters,
+                isSufficient
         );
     }
 }

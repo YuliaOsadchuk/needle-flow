@@ -36,12 +36,13 @@ class DesignControllerTest {
     void findAll_shouldReturnOkAndListOfDesigns() throws Exception {
         DesignerResponseDto designerDto = new DesignerResponseDto(1, "Dimensions");
         List<DesignThreadResponseDto> threads = List.of(
-                new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10))
+                new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10)
+                        , new BigDecimal(10), true)
         );
 
         List<DesignResponseDto> mockResponseBody = List.of(
-                new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED, threads),
-                new DesignResponseDto(2, "Lighthouse", designerDto, DesignStatus.IN_PROGRESS, threads)
+                new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED, threads, true),
+                new DesignResponseDto(2, "Lighthouse", designerDto, DesignStatus.IN_PROGRESS, threads, true)
         );
 
         when(service.findAll()).thenReturn(mockResponseBody);
@@ -71,9 +72,11 @@ class DesignControllerTest {
     void findById_shouldReturnOkAndOneRecord() throws Exception {
         DesignerResponseDto designerDto = new DesignerResponseDto(1, "Dimensions");
         List<DesignThreadResponseDto> threads = List.of(
-                new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10))
+                new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10),
+                        new BigDecimal(10), true)
         );
-        DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED, threads);
+        DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED,
+                threads, true);
 
         when(service.findById(1)).thenReturn(responseDto);
 
@@ -99,9 +102,11 @@ class DesignControllerTest {
         CreateDesignDto createDto = new CreateDesignDto("Sunflowers", 1, DesignStatus.PLANNED, threadsResponse);
         DesignerResponseDto designerDto = new DesignerResponseDto(1, "Dimensions");
         List<DesignThreadResponseDto> threads = List.of(
-                new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10))
+                new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10),
+                        new BigDecimal(10), true)
         );
-        DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED, threads);
+        DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED,
+                threads, true);
 
         when(service.save(createDto)).thenReturn(responseDto);
 
@@ -134,9 +139,11 @@ class DesignControllerTest {
         CreateDesignDto updateDto = new CreateDesignDto("Sunflowers Updated", 1, DesignStatus.IN_PROGRESS, threadsResponse);
         DesignerResponseDto designerDto = new DesignerResponseDto(1, "Dimensions");
         List<DesignThreadResponseDto> threads = List.of(
-                new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10))
+                new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10),
+                        new BigDecimal(10), true)
         );
-        DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers Updated", designerDto, DesignStatus.IN_PROGRESS, threads);
+        DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers Updated", designerDto,
+                DesignStatus.IN_PROGRESS, threads, true);
 
         when(service.update(1, updateDto)).thenReturn(responseDto);
 
