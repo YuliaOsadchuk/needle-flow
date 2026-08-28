@@ -6,6 +6,28 @@
     <title>NeedleFlow — Каталог та Запаси Муліне</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Заміна червоної (rose) палітри на ніжно-бузкову
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        rose: {
+                            50: '#f8f5fc',
+                            100: '#f1eaf8',
+                            200: '#e4d5f0',
+                            300: '#d3b8e6',
+                            400: '#c39ddb',
+                            500: '#b183cf',
+                            600: '#9d6bc0',
+                            700: '#8656a8',
+                            800: '#6f4589',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <!-- Vue.js 3 CDN -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- Axios CDN -->
@@ -60,7 +82,7 @@
 
     <!-- Global Toast / Alert -->
     <div v-if="toast.show"
-         :class="toast.isError ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'"
+         :class="toast.isError ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'"
          class="fixed bottom-4 right-4 z-50 max-w-md p-4 rounded-xl border shadow-lg flex items-start gap-3 transition-all">
         <span class="text-lg">{{ toast.isError ? '⚠️' : '✅' }}</span>
         <div class="flex-1 text-sm font-medium">{{ toast.message }}</div>
@@ -69,6 +91,30 @@
 
     <!-- ================= DESIGNS TAB ================= -->
     <main v-if="currentTab === 'designs'">
+
+        <!-- Selection Mode Action Bar -->
+        <div v-if="isSelectionMode" class="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+            <div class="flex items-center gap-3">
+                <span class="text-lg">🛒</span>
+                <div>
+                    <div class="font-bold text-stone-900 text-sm">Режим вибору дизайнів</div>
+                    <div class="text-xs text-stone-600">Обрано проєктів: <strong class="text-rose-600">{{ selectedDesignIds.length }}</strong></div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button @click="toggleSelectAllDesigns" class="px-3 py-1.5 bg-white hover:bg-stone-100 text-stone-700 text-xs font-semibold rounded-xl border border-stone-200 transition">
+                    {{ selectedDesignIds.length === filteredDesigns.length ? 'Зняти всі' : 'Обрати всі' }}
+                </button>
+                <button @click="calculateShoppingList" :disabled="selectedDesignIds.length === 0 || isCalculatingShoppingList"
+                        class="px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5">
+                    <span>🧮</span> {{ isCalculatingShoppingList ? 'Рахуємо...' : 'Розрахувати нитки' }}
+                </button>
+                <button @click="toggleSelectionMode" class="px-3 py-1.5 bg-stone-200 hover:bg-stone-300 text-stone-700 text-xs font-semibold rounded-xl transition">
+                    Скасувати
+                </button>
+            </div>
+        </div>
+
         <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6">
             <div class="flex flex-1 flex-col sm:flex-row gap-3">
                 <input v-model="designSearch" type="text" placeholder="Пошук дизайну за назвою..."
@@ -81,16 +127,33 @@
                 </select>
             </div>
 
-            <button @click="openDesignModal()"
-                    class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-medium transition shadow-sm flex items-center justify-center gap-2">
-                <span>+</span> Додати дизайн
-            </button>
+            <div class="flex items-center gap-2">
+                <button v-if="!isSelectionMode" @click="toggleSelectionMode"
+                        class="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-sm font-medium transition shadow-sm flex items-center justify-center gap-2">
+                    <span>🛒</span> Розрахувати закупку
+                </button>
+
+                <button @click="openDesignModal()"
+                        class="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-sm font-medium transition shadow-sm flex items-center justify-center gap-2">
+                    <span>+</span> Додати дизайн
+                </button>
+            </div>
         </div>
 
         <div v-if="filteredDesigns.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <div v-for="d in filteredDesigns" :key="d.id"
-                 :class="isDesignReady(d) ? 'bg-emerald-50/40 border-emerald-300 ring-1 ring-emerald-300/50' : 'bg-white border-stone-200/80'"
-                 class="border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between group">
+                 @click="isSelectionMode ? toggleDesignSelection(d.id) : null"
+                 :class="[
+                     isSelectionMode ? 'cursor-pointer select-none' : '',
+                     selectedDesignIds.includes(d.id) ? 'ring-2 ring-rose-500 border-rose-500 bg-rose-50/20' : (isDesignReady(d) ? 'bg-emerald-50/40 border-emerald-300 ring-1 ring-emerald-300/50' : 'bg-white border-stone-200/80')
+                 ]"
+                 class="border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between group relative">
+
+                <!-- Checkbox overlay in selection mode -->
+                <div v-if="isSelectionMode" class="absolute top-3 left-3 z-10">
+                    <input type="checkbox" :checked="selectedDesignIds.includes(d.id)"
+                           class="w-5 h-5 rounded-md text-rose-600 focus:ring-rose-500 cursor-pointer accent-rose-600">
+                </div>
 
                 <div>
                     <!-- Design Cover Image -->
@@ -132,7 +195,7 @@
 
                                 <!-- Toggle Expand / Collapse Button -->
                                 <button v-if="d.threads.length > 6"
-                                        @click="toggleExpandDesign(d.id)"
+                                        @click.stop="toggleExpandDesign(d.id)"
                                         class="px-2 py-1 bg-stone-200/70 hover:bg-stone-200 text-stone-700 rounded-md text-xs font-semibold transition border border-stone-300/60">
                                     {{ expandedDesignIds.includes(d.id) ? 'Згорнути' : `+${d.threads.length - 6} ще` }}
                                 </button>
@@ -142,7 +205,7 @@
                     </div>
                 </div>
 
-                <div class="p-5 pt-4 mt-4 border-t border-stone-100/80 flex items-center justify-between gap-2">
+                <div class="p-5 pt-4 mt-4 border-t border-stone-100/80 flex items-center justify-between gap-2" @click.stop>
                     <button @click="openDesignDetailsModal(d)"
                             class="px-3 py-1.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
                         📋 Палітра ({{ d.threads ? d.threads.length : 0 }})
@@ -225,7 +288,7 @@
             </div>
 
             <button @click="openThreadModal()"
-                    class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-medium transition shadow-sm flex items-center justify-center gap-2">
+                    class="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-sm font-medium transition shadow-sm flex items-center justify-center gap-2">
                 <span>+</span> Додати нитку
             </button>
         </div>
@@ -338,6 +401,79 @@
         </div>
     </main>
 
+    <!-- ================= MODAL: SHOPPING LIST ================= -->
+    <div v-if="showShoppingModal"
+         class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-xl border border-stone-100 max-h-[85vh] flex flex-col">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b border-stone-100 pb-4 mb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-stone-900 flex items-center gap-2">
+                        <span>🛒</span> Розрахунок закупки ниток
+                    </h3>
+                    <p class="text-xs text-stone-500">
+                        Розраховано для {{ selectedDesignIds.length }} обраних дизайнів
+                    </p>
+                </div>
+                <button @click="copyShoppingListToClipboard" class="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-semibold transition flex items-center gap-1">
+                    <span>📋</span> Скопіювати список
+                </button>
+            </div>
+
+            <!-- Scrollable Shopping List Table -->
+            <div class="overflow-y-auto flex-1 pr-1">
+                <table v-if="shoppingList.length > 0" class="w-full text-left text-sm">
+                    <thead class="bg-stone-50 sticky top-0 border-b border-stone-200 text-stone-500 uppercase text-xs font-semibold">
+                    <tr>
+                        <th class="p-3">Статус</th>
+                        <th class="p-3">Виробник</th>
+                        <th class="p-3">Код</th>
+                        <th class="p-3">Назва</th>
+                        <th class="p-3 text-right">Потрібно</th>
+                        <th class="p-3 text-right">Є в запасі</th>
+                        <th class="p-3 text-right">Докупити</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-stone-100">
+                    <tr v-for="item in shoppingList" :key="item.threadId"
+                        :class="item.toBuyQuantity === 0 ? 'bg-stone-50/50 opacity-75' : 'hover:bg-rose-50/20'"
+                        class="transition">
+
+                        <td class="p-3 text-base">
+                            <span v-if="item.toBuyQuantity === 0" title="Вистачає">✅</span>
+                            <span v-else title="Потрібно докупити">🛒</span>
+                        </td>
+                        <td class="p-3 font-medium text-stone-600">{{ item.manufacturerName }}</td>
+                        <td class="p-3 font-bold text-stone-900">#{{ item.code }}</td>
+                        <td class="p-3 text-stone-600">{{ item.threadName }}</td>
+                        <td class="p-3 text-right font-medium text-stone-800">{{ item.requiredQuantity }} шт.</td>
+                        <td class="p-3 text-right font-medium text-stone-600">{{ item.inStockQuantity }} шт.</td>
+                        <td class="p-3 text-right">
+                            <span v-if="item.toBuyQuantity > 0" class="px-2 py-1 bg-rose-100 text-rose-700 font-bold rounded-lg text-xs">
+                                +{{ item.toBuyQuantity }} шт.
+                            </span>
+                            <span v-else class="text-stone-400 text-xs">—</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <div v-else class="text-center py-12 text-stone-400 text-sm">
+                    Список покупок порожній.
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="pt-4 border-t border-stone-100 flex justify-end">
+                <button @click="showShoppingModal = false"
+                        class="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white text-sm rounded-xl font-medium transition">
+                    Закрити
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ================= MODAL: DESIGN DETAILS & PALETTE ================= -->
     <div v-if="detailsModal.show"
          class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -363,7 +499,7 @@
             <!-- Scrollable Thread List -->
             <div class="overflow-y-auto flex-1 pr-1 space-y-2">
                 <div v-for="dt in detailsModal.design.threads" :key="dt.threadId || dt.id"
-                     :class="isThreadSufficient(dt) ? 'bg-emerald-50/60 border-emerald-200' : 'bg-rose-50/40 border-rose-200'"
+                     :class="isThreadSufficient(dt) ? 'bg-emerald-50/60 border-emerald-200' : 'bg-red-50/40 border-red-200'"
                      class="p-3 rounded-xl border flex items-center justify-between text-sm transition">
 
                     <div class="flex items-center gap-3">
@@ -381,7 +517,7 @@
 
                     <div class="text-right text-xs">
                         <div class="font-semibold text-stone-800">Потрібно: {{ dt.requiredMeters }} м</div>
-                        <div :class="isThreadSufficient(dt) ? 'text-emerald-700 font-medium' : 'text-rose-600 font-bold'">
+                        <div :class="isThreadSufficient(dt) ? 'text-emerald-700 font-medium' : 'text-red-600 font-bold'">
                             Є: {{ getAvailableMeters(dt) }} м
                         </div>
                     </div>
@@ -670,6 +806,65 @@
             const selectedManufacturerFilter = ref(null);
             const designSearch = ref('');
             const selectedDesignerFilter = ref(null);
+
+            // Selection Mode & Shopping List State
+            const isSelectionMode = ref(false);
+            const selectedDesignIds = ref([]);
+            const showShoppingModal = ref(false);
+            const shoppingList = ref([]);
+            const isCalculatingShoppingList = ref(false);
+
+            const toggleSelectionMode = () => {
+                isSelectionMode.value = !isSelectionMode.value;
+                if (!isSelectionMode.value) {
+                    selectedDesignIds.value = [];
+                }
+            };
+
+            const toggleDesignSelection = (designId) => {
+                const index = selectedDesignIds.value.indexOf(designId);
+                if (index > -1) {
+                    selectedDesignIds.value.splice(index, 1);
+                } else {
+                    selectedDesignIds.value.push(designId);
+                }
+            };
+
+            const toggleSelectAllDesigns = () => {
+                if (selectedDesignIds.value.length === filteredDesigns.value.length) {
+                    selectedDesignIds.value = [];
+                } else {
+                    selectedDesignIds.value = filteredDesigns.value.map(d => d.id);
+                }
+            };
+
+            const calculateShoppingList = async () => {
+                if (selectedDesignIds.value.length === 0) return;
+
+                isCalculatingShoppingList.value = true;
+                try {
+                    const res = await axios.post(`${API_BASE}/designs/shopping-list`, selectedDesignIds.value);
+                    shoppingList.value = res.data;
+                    showShoppingModal.value = true;
+                } catch (err) {
+                    showToast('Помилка розрахунку списку закупки', true);
+                } finally {
+                    isCalculatingShoppingList.value = false;
+                }
+            };
+
+            const copyShoppingListToClipboard = () => {
+                if (shoppingList.value.length === 0) return;
+
+                const textToBuy = shoppingList.value
+                    .filter(i => i.toBuyQuantity > 0)
+                    .map(i => `${i.manufacturerName} #${i.code} — ${i.toBuyQuantity} шт.`)
+                    .join('\n');
+
+                const text = `🛒 Список закупки ниток:\n\n` + (textToBuy || 'Усі нитки є в наявності!');
+                navigator.clipboard.writeText(text);
+                showToast('Список покупок скопійовано у буфер!');
+            };
 
             // Expansion state for design threads preview
             const expandedDesignIds = ref([]);
@@ -1109,6 +1304,16 @@
                 selectedDesignerFilter,
                 filteredThreads,
                 filteredDesigns,
+                isSelectionMode,
+                selectedDesignIds,
+                showShoppingModal,
+                shoppingList,
+                isCalculatingShoppingList,
+                toggleSelectionMode,
+                toggleDesignSelection,
+                toggleSelectAllDesigns,
+                calculateShoppingList,
+                copyShoppingListToClipboard,
                 expandedDesignIds,
                 toggleExpandDesign,
                 getVisibleThreads,

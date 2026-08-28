@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import yosadchuk.needle.flow.model.dto.CreateDesignDto;
 import yosadchuk.needle.flow.model.dto.DesignResponseDto;
+import yosadchuk.needle.flow.model.dto.ShoppingListItemDto;
 import yosadchuk.needle.flow.service.DesignService;
 import yosadchuk.needle.flow.service.FileStorageService;
 
@@ -50,5 +51,10 @@ public class DesignController {
     public ResponseEntity<DesignResponseDto> uploadImage(@PathVariable Integer id, @RequestParam("file") MultipartFile file) {
         String imagePath = fileStorageService.storeFile(file);
         return ResponseEntity.ok(designService.updateImageUrl(id, imagePath));
+    }
+
+    @PostMapping("/shopping-list")
+    public ResponseEntity<List<ShoppingListItemDto>> calculateShoppingList(@RequestBody List<Integer> designIds) {
+        return ResponseEntity.ok().body(designService.calculateShoppingList(designIds));
     }
 }

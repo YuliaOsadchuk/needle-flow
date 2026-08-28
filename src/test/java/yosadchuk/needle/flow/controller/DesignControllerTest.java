@@ -12,6 +12,7 @@ import yosadchuk.needle.flow.exception.ResourceNotFoundException;
 import yosadchuk.needle.flow.model.dto.*;
 import yosadchuk.needle.flow.model.entity.DesignStatus;
 import yosadchuk.needle.flow.service.DesignService;
+import yosadchuk.needle.flow.service.FileStorageService;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -29,6 +30,9 @@ class DesignControllerTest {
     @MockitoBean
     private DesignService service;
 
+    @MockitoBean
+    private FileStorageService fileStorageService;
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -39,10 +43,13 @@ class DesignControllerTest {
                 new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10)
                         , new BigDecimal(10), true)
         );
+        String imagePath = "/uploads/design/1.jpeg";
 
         List<DesignResponseDto> mockResponseBody = List.of(
-                new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED, threads, true),
-                new DesignResponseDto(2, "Lighthouse", designerDto, DesignStatus.IN_PROGRESS, threads, true)
+                new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED, threads,
+                        true, imagePath),
+                new DesignResponseDto(2, "Lighthouse", designerDto, DesignStatus.IN_PROGRESS, threads,
+                        true, imagePath)
         );
 
         when(service.findAll()).thenReturn(mockResponseBody);
@@ -75,8 +82,9 @@ class DesignControllerTest {
                 new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10),
                         new BigDecimal(10), true)
         );
+        String imagePath = "/uploads/design/1.jpeg";
         DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED,
-                threads, true);
+                threads, true, imagePath);
 
         when(service.findById(1)).thenReturn(responseDto);
 
@@ -105,8 +113,9 @@ class DesignControllerTest {
                 new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10),
                         new BigDecimal(10), true)
         );
+        String imagePath = "/uploads/design/1.jpeg";
         DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED,
-                threads, true);
+                threads, true, imagePath);
 
         when(service.save(createDto)).thenReturn(responseDto);
 
@@ -142,8 +151,9 @@ class DesignControllerTest {
                 new DesignThreadResponseDto(1, 1, "310", "Black", new BigDecimal(10),
                         new BigDecimal(10), true)
         );
+        String imagePath = "/uploads/design/1.jpeg";
         DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers Updated", designerDto,
-                DesignStatus.IN_PROGRESS, threads, true);
+                DesignStatus.IN_PROGRESS, threads, true, imagePath);
 
         when(service.update(1, updateDto)).thenReturn(responseDto);
 

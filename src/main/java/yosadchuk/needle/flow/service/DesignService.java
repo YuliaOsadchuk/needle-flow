@@ -10,15 +10,16 @@ import yosadchuk.needle.flow.mapper.DesignMapper;
 import yosadchuk.needle.flow.model.dto.CreateDesignDto;
 import yosadchuk.needle.flow.model.dto.DesignResponseDto;
 import yosadchuk.needle.flow.model.dto.DesignThreadRequestDto;
-import yosadchuk.needle.flow.model.entity.Design;
-import yosadchuk.needle.flow.model.entity.DesignThread;
-import yosadchuk.needle.flow.model.entity.Designer;
+import yosadchuk.needle.flow.model.dto.ShoppingListItemDto;
+import yosadchuk.needle.flow.model.entity.*;
 import yosadchuk.needle.flow.model.entity.Thread;
 import yosadchuk.needle.flow.repository.DesignRepository;
+import yosadchuk.needle.flow.repository.DesignThreadRepository;
 import yosadchuk.needle.flow.repository.DesignerRepository;
 import yosadchuk.needle.flow.repository.ThreadRepository;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,6 +35,7 @@ public class DesignService {
     private final DesignRepository designRepository;
     private final DesignerRepository designerRepository;
     private final ThreadRepository threadRepository;
+    private final DesignThreadRepository designThreadRepository;
     private final DesignMapper designMapper;
 
     public List<DesignResponseDto> findAll() {
@@ -115,9 +117,41 @@ public class DesignService {
         return designMapper.toDto(entity);
     }
 
+    public List<ShoppingListItemDto> calculateShoppingList(List<Integer> designIds) {
+        if (designIds == null || designIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<DesignThread> designThreads = designThreadRepository.findByDesignIdIn(designIds);
+        Map<Thread, BigDecimal> totalRequiredMap = designThreads.stream()
+                .collect(Collectors.groupingBy(DesignThread::getThread,
+                        Collectors.reducing(BigDecimal.ZERO, DesignThread::getRequiredMeters, BigDecimal::add)));
+
+        return totalRequiredMap.entrySet().stream()
+                .map(entry -> {
+                    Thread thread = entry.getKey();
+                    Inventory inventory = thread.getInventory();
+                    BigDecimal inStock = inventory.getBobbinQuantity().add(BigDecimal.valueOf(inventory.getSkeinQuantity() * 8));
+                    BigDecimal required = entry.getValue();
+                    BigDecimal toBuy = required.subtract(inStock);
+
+                    return new ShoppingListItemDto(
+                            thread.getId(),
+                            thread.getCode(),
+                            thread.getName(),
+                            thread.getManufacturer().getName(),
+                            required,
+                            inStock,
+                            toBuy
+                    );
+                })
+                .sorted(Comparator.comparing(ShoppingListItemDto::manufacturerName).thenComparing(ShoppingListItemDto::code))
+                .toList();
+    }
+
     private void deleteImageFile(String imagePath) {
         try {
-        String fileName = Paths.get(imagePath).getFileName().toString();
+            String fileName = Paths.get(imagePath).getFileName().toString();
             Path filePath = Paths.get("uploads", "designs", fileName).toAbsolutePath().normalize();
             Files.deleteIfExists(filePath);
         } catch (IOException e) {
