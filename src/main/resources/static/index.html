@@ -7,7 +7,6 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Заміна червоної (rose) палітри на ніжно-бузкову
         tailwind.config = {
             theme: {
                 extend: {
@@ -57,22 +56,22 @@
 
         <!-- Navigation Tabs -->
         <div class="flex flex-wrap items-center gap-1.5 bg-stone-200/60 p-1 rounded-xl w-fit">
-            <button @click="currentTab = 'designs'"
+            <button @click="switchTab('designs')"
                     :class="currentTab === 'designs' ? 'bg-white shadow-sm text-stone-900 font-medium' : 'text-stone-600 hover:text-stone-900'"
                     class="px-3.5 py-1.5 rounded-lg text-sm transition">
                 🖼️ Дизайни
             </button>
-            <button @click="currentTab = 'designers'"
+            <button @click="switchTab('designers')"
                     :class="currentTab === 'designers' ? 'bg-white shadow-sm text-stone-900 font-medium' : 'text-stone-600 hover:text-stone-900'"
                     class="px-3.5 py-1.5 rounded-lg text-sm transition">
                 🎨 Дизайнери
             </button>
-            <button @click="currentTab = 'threads'"
+            <button @click="switchTab('threads')"
                     :class="currentTab === 'threads' ? 'bg-white shadow-sm text-stone-900 font-medium' : 'text-stone-600 hover:text-stone-900'"
                     class="px-3.5 py-1.5 rounded-lg text-sm transition">
                 🧵 Нитки
             </button>
-            <button @click="currentTab = 'manufacturers'"
+            <button @click="switchTab('manufacturers')"
                     :class="currentTab === 'manufacturers' ? 'bg-white shadow-sm text-stone-900 font-medium' : 'text-stone-600 hover:text-stone-900'"
                     class="px-3.5 py-1.5 rounded-lg text-sm transition">
                 🏢 Виробники
@@ -140,88 +139,109 @@
             </div>
         </div>
 
-        <div v-if="filteredDesigns.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div v-for="d in filteredDesigns" :key="d.id"
-                 @click="isSelectionMode ? toggleDesignSelection(d.id) : null"
-                 :class="[
-                     isSelectionMode ? 'cursor-pointer select-none' : '',
-                     selectedDesignIds.includes(d.id) ? 'ring-2 ring-rose-500 border-rose-500 bg-rose-50/20' : (isDesignReady(d) ? 'bg-emerald-50/40 border-emerald-300 ring-1 ring-emerald-300/50' : 'bg-white border-stone-200/80')
-                 ]"
-                 class="border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between group relative">
+        <div v-if="paginatedDesigns.length > 0">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div v-for="d in paginatedDesigns" :key="d.id"
+                     @click="isSelectionMode ? toggleDesignSelection(d.id) : null"
+                     :class="[
+                         isSelectionMode ? 'cursor-pointer select-none' : '',
+                         selectedDesignIds.includes(d.id) ? 'ring-2 ring-rose-500 border-rose-500 bg-rose-50/20' : (isDesignReady(d) ? 'bg-emerald-50/40 border-emerald-300 ring-1 ring-emerald-300/50' : 'bg-white border-stone-200/80')
+                     ]"
+                     class="border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between group relative">
 
-                <!-- Checkbox overlay in selection mode -->
-                <div v-if="isSelectionMode" class="absolute top-3 left-3 z-10">
-                    <input type="checkbox" :checked="selectedDesignIds.includes(d.id)"
-                           class="w-5 h-5 rounded-md text-rose-600 focus:ring-rose-500 cursor-pointer accent-rose-600">
-                </div>
-
-                <div>
-                    <!-- Design Cover Image -->
-                    <div class="h-48 w-full bg-stone-100 border-b border-stone-100 relative overflow-hidden flex items-center justify-center">
-                        <img v-if="d.url" :src="d.url" :alt="d.name || d.title" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
-                        <div v-else class="text-4xl text-stone-300 select-none">🖼️</div>
-
-                        <!-- Status Badge Overlay -->
-                        <span v-if="isDesignReady(d)"
-                              class="absolute top-3 right-3 px-2.5 py-1 bg-emerald-500/90 backdrop-blur-md text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-1">
-                            ✅ Готовий
-                        </span>
-                        <span v-else
-                              class="absolute top-3 right-3 px-2.5 py-1 bg-stone-900/60 backdrop-blur-md text-white rounded-lg text-xs font-medium shadow-sm">
-                            🧵 Потрібні нитки
-                        </span>
+                    <!-- Checkbox overlay in selection mode -->
+                    <div v-if="isSelectionMode" class="absolute top-3 left-3 z-10">
+                        <input type="checkbox" :checked="selectedDesignIds.includes(d.id)"
+                               class="w-5 h-5 rounded-md text-rose-600 focus:ring-rose-500 cursor-pointer accent-rose-600">
                     </div>
 
-                    <div class="p-5 pb-0">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="px-2.5 py-1 bg-stone-100 text-stone-700 rounded-lg text-xs font-semibold">
-                                🎨 {{ d.designer ? d.designer.name : (d.designerName || 'Без автора') }}
+                    <div>
+                        <!-- Design Cover Image Fitted Properly -->
+                        <div class="w-full aspect-[4/3] bg-stone-100/80 border-b border-stone-200/60 relative overflow-hidden flex items-center justify-center p-2">
+                            <img v-if="d.url" :src="d.url" :alt="d.name || d.title" class="w-full h-full object-contain drop-shadow-sm group-hover:scale-105 transition duration-300" />
+                            <div v-else class="text-4xl text-stone-300 select-none">🖼️</div>
+
+                            <!-- Status Badge Overlay -->
+                            <span v-if="isDesignReady(d)"
+                                  class="absolute top-3 right-3 px-2.5 py-1 bg-emerald-500/90 backdrop-blur-md text-white rounded-lg text-xs font-bold shadow-sm flex items-center gap-1">
+                                ✅ Готовий
+                            </span>
+                            <span v-else
+                                  class="absolute top-3 right-3 px-2.5 py-1 bg-stone-900/60 backdrop-blur-md text-white rounded-lg text-xs font-medium shadow-sm">
+                                🧵 Потрібні нитки
                             </span>
                         </div>
 
-                        <h3 class="text-lg font-bold text-stone-900 mb-4">{{ d.name || d.title }}</h3>
-
-                        <!-- Quick Threads Preview -->
-                        <div class="space-y-2">
-                            <div class="text-xs font-semibold text-stone-400 uppercase tracking-wider">Необхідні нитки:</div>
-                            <div v-if="d.threads && d.threads.length > 0" class="flex flex-wrap gap-1.5 items-center">
-                                <span v-for="dt in getVisibleThreads(d)" :key="dt.threadId || dt.id"
-                                      :class="isThreadSufficient(dt) ? 'bg-emerald-100/70 text-emerald-900 border-emerald-300/60' : 'bg-stone-100 text-stone-700 border-stone-200/60'"
-                                      class="px-2 py-1 rounded-md text-xs font-medium border flex items-center gap-1">
-                                    <span>{{ isThreadSufficient(dt) ? '✓' : '•' }}</span>
-                                    #{{ dt.thread?.code || dt.threadCode || dt.code }}
-                                    <span class="text-stone-400">({{ dt.requiredMeters }}м)</span>
+                        <div class="p-5 pb-0">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="px-2.5 py-1 bg-stone-100 text-stone-700 rounded-lg text-xs font-semibold">
+                                    🎨 {{ d.designer ? d.designer.name : (d.designerName || 'Без автора') }}
                                 </span>
-
-                                <!-- Toggle Expand / Collapse Button -->
-                                <button v-if="d.threads.length > 6"
-                                        @click.stop="toggleExpandDesign(d.id)"
-                                        class="px-2 py-1 bg-stone-200/70 hover:bg-stone-200 text-stone-700 rounded-md text-xs font-semibold transition border border-stone-300/60">
-                                    {{ expandedDesignIds.includes(d.id) ? 'Згорнути' : `+${d.threads.length - 6} ще` }}
-                                </button>
                             </div>
-                            <p v-else class="text-xs text-stone-400 italic">Нитки ще не додані</p>
+
+                            <h3 class="text-lg font-bold text-stone-900 mb-4">{{ d.name || d.title }}</h3>
+
+                            <!-- Quick Threads Preview -->
+                            <div class="space-y-2">
+                                <div class="text-xs font-semibold text-stone-400 uppercase tracking-wider">Необхідні нитки:</div>
+                                <div v-if="d.threads && d.threads.length > 0" class="flex flex-wrap gap-1.5 items-center">
+                                    <span v-for="dt in getVisibleThreads(d)" :key="dt.threadId || dt.id"
+                                          :class="isThreadSufficient(dt) ? 'bg-emerald-100/70 text-emerald-900 border-emerald-300/60' : 'bg-stone-100 text-stone-700 border-stone-200/60'"
+                                          class="px-2 py-1 rounded-md text-xs font-medium border flex items-center gap-1">
+                                        <span>{{ isThreadSufficient(dt) ? '✓' : '•' }}</span>
+                                        #{{ dt.thread?.code || dt.threadCode || dt.code }}
+                                        <span class="text-stone-400">({{ dt.requiredMeters }}м)</span>
+                                    </span>
+
+                                    <button v-if="d.threads.length > 6"
+                                            @click.stop="toggleExpandDesign(d.id)"
+                                            class="px-2 py-1 bg-stone-200/70 hover:bg-stone-200 text-stone-700 rounded-md text-xs font-semibold transition border border-stone-300/60">
+                                        {{ expandedDesignIds.includes(d.id) ? 'Згорнути' : `+${d.threads.length - 6} ще` }}
+                                    </button>
+                                </div>
+                                <p v-else class="text-xs text-stone-400 italic">Нитки ще не додані</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-5 pt-4 mt-4 border-t border-stone-100/80 flex items-center justify-between gap-2" @click.stop>
+                        <button @click="openDesignDetailsModal(d)"
+                                class="px-3 py-1.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                            📋 Палітра ({{ d.threads ? d.threads.length : 0 }})
+                        </button>
+
+                        <div class="flex items-center gap-1">
+                            <button @click="openDesignModal(d)"
+                                    class="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100"
+                                    title="Редагувати">✏️
+                            </button>
+                            <button @click="deleteDesign(d.id)"
+                                    class="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-100"
+                                    title="Видалити">🗑️
+                            </button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="p-5 pt-4 mt-4 border-t border-stone-100/80 flex items-center justify-between gap-2" @click.stop>
-                    <button @click="openDesignDetailsModal(d)"
-                            class="px-3 py-1.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
-                        📋 Палітра ({{ d.threads ? d.threads.length : 0 }})
+            <!-- Pagination Designs -->
+            <div v-if="totalDesignPages > 1" class="mt-8 flex items-center justify-center gap-1.5">
+                <button @click="designsPage--" :disabled="designsPage === 1"
+                        class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-100 disabled:opacity-40 disabled:hover:bg-transparent transition">
+                    ←
+                </button>
+                <template v-for="page in getVisiblePages(designsPage, totalDesignPages)" :key="page">
+                    <span v-if="page === '...'" class="px-2 py-1 text-xs text-stone-400">...</span>
+                    <button v-else @click="designsPage = page"
+                            :class="designsPage === page ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'"
+                            class="px-3 py-1.5 rounded-xl border text-xs font-semibold transition">
+                        {{ page }}
                     </button>
-
-                    <div class="flex items-center gap-1">
-                        <button @click="openDesignModal(d)"
-                                class="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100"
-                                title="Редагувати">✏️
-                        </button>
-                        <button @click="deleteDesign(d.id)"
-                                class="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-100"
-                                title="Видалити">🗑️
-                        </button>
-                    </div>
-                </div>
+                </template>
+                <button @click="designsPage++" :disabled="designsPage === totalDesignPages"
+                        class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-100 disabled:opacity-40 disabled:hover:bg-transparent transition">
+                    →
+                </button>
             </div>
         </div>
 
@@ -241,7 +261,7 @@
             </button>
         </div>
 
-        <div class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+        <div v-if="paginatedDesigners.length > 0" class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
             <table class="w-full text-left text-sm">
                 <thead class="bg-stone-50 border-b border-stone-200 text-stone-500 uppercase text-xs font-semibold">
                 <tr>
@@ -251,7 +271,7 @@
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-stone-100">
-                <tr v-for="d in designers" :key="d.id" class="hover:bg-stone-50/50 transition">
+                <tr v-for="d in paginatedDesigners" :key="d.id" class="hover:bg-stone-50/50 transition">
                     <td class="px-6 py-4 font-mono text-xs text-stone-400">#{{ d.id }}</td>
                     <td class="px-6 py-4 font-semibold text-stone-900">{{ d.name }}</td>
                     <td class="px-6 py-4 text-right space-x-2">
@@ -265,11 +285,32 @@
                         </button>
                     </td>
                 </tr>
-                <tr v-if="designers.length === 0">
-                    <td colspan="3" class="px-6 py-8 text-center text-stone-400">Список дизайнерів порожній</td>
-                </tr>
                 </tbody>
             </table>
+        </div>
+
+        <div v-else class="text-center py-16 bg-white rounded-2xl border border-dashed border-stone-200">
+            <p class="text-stone-400 text-base">Список дизайнерів порожній</p>
+        </div>
+
+        <!-- Pagination Designers -->
+        <div v-if="totalDesignerPages > 1" class="mt-6 flex items-center justify-center gap-1.5">
+            <button @click="designersPage--" :disabled="designersPage === 1"
+                    class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-100 disabled:opacity-40 disabled:hover:bg-transparent transition">
+                ←
+            </button>
+            <template v-for="page in getVisiblePages(designersPage, totalDesignerPages)" :key="page">
+                <span v-if="page === '...'" class="px-2 py-1 text-xs text-stone-400">...</span>
+                <button v-else @click="designersPage = page"
+                        :class="designersPage === page ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'"
+                        class="px-3 py-1.5 rounded-xl border text-xs font-semibold transition">
+                    {{ page }}
+                </button>
+            </template>
+            <button @click="designersPage++" :disabled="designersPage === totalDesignerPages"
+                    class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-100 disabled:opacity-40 disabled:hover:bg-transparent transition">
+                →
+            </button>
         </div>
     </main>
 
@@ -309,11 +350,11 @@
             </button>
         </div>
 
-        <div v-if="filteredThreads.length > 0">
+        <div v-if="paginatedThreads.length > 0">
             <!-- 1. Grid View (Картки) -->
             <div v-if="threadViewMode === 'grid'"
                  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <div v-for="t in filteredThreads" :key="t.id"
+                <div v-for="t in paginatedThreads" :key="t.id"
                      class="bg-white border border-stone-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md transition flex flex-col justify-between group">
                     <div>
                         <div class="flex items-center justify-between mb-3">
@@ -349,7 +390,9 @@
                             </div>
                             <div class="flex justify-between text-stone-600">
                                 <span>Всього доступно:</span>
-                                <strong class="text-emerald-700">{{ t.inventory?.totalMeters || 0 }} м</strong>
+                                <strong :class="(t.inventory?.totalMeters || 0) > 0 ? 'text-emerald-600 font-bold' : 'text-stone-400 font-medium'">
+                                    {{ t.inventory?.totalMeters || 0 }} м
+                                </strong>
                             </div>
                         </div>
                     </div>
@@ -371,7 +414,7 @@
                 </div>
             </div>
 
-            <!-- 2. List View (Компактна таблиця як у Виробниках) -->
+            <!-- 2. List View (Компактна таблиця) -->
             <div v-else class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-stone-50 border-b border-stone-200 text-stone-500 uppercase text-xs font-semibold">
@@ -387,7 +430,7 @@
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-stone-100">
-                    <tr v-for="t in filteredThreads" :key="t.id" class="hover:bg-stone-50/50 transition">
+                    <tr v-for="t in paginatedThreads" :key="t.id" class="hover:bg-stone-50/50 transition">
                         <td class="px-4 py-3 text-xs font-semibold text-stone-500">
                             {{ t.manufacturer ? t.manufacturer.name : '—' }}
                         </td>
@@ -403,8 +446,11 @@
                         <td class="px-4 py-3 text-center text-stone-900 font-medium">
                             {{ t.inventory?.bobbinMeters || 0 }} м
                         </td>
-                        <td class="px-4 py-3 text-center text-emerald-700 font-bold">
-                            {{ t.inventory?.totalMeters || 0 }} м
+                        <td class="px-4 py-3 text-center">
+                            <!-- Дінамічна підсвітка зеленим лише якщо є залишок > 0 -->
+                            <span :class="(t.inventory?.totalMeters || 0) > 0 ? 'text-emerald-600 font-bold' : 'text-stone-400 font-medium'">
+                                {{ t.inventory?.totalMeters || 0 }} м
+                            </span>
                         </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-1">
@@ -433,6 +479,26 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Pagination Threads -->
+            <div v-if="totalThreadPages > 1" class="mt-6 flex items-center justify-center gap-1.5">
+                <button @click="threadsPage--" :disabled="threadsPage === 1"
+                        class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-100 disabled:opacity-40 disabled:hover:bg-transparent transition">
+                    ←
+                </button>
+                <template v-for="page in getVisiblePages(threadsPage, totalThreadPages)" :key="page">
+                    <span v-if="page === '...'" class="px-2 py-1 text-xs text-stone-400">...</span>
+                    <button v-else @click="threadsPage = page"
+                            :class="threadsPage === page ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'"
+                            class="px-3 py-1.5 rounded-xl border text-xs font-semibold transition">
+                        {{ page }}
+                    </button>
+                </template>
+                <button @click="threadsPage++" :disabled="threadsPage === totalThreadPages"
+                        class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-100 disabled:opacity-40 disabled:hover:bg-transparent transition">
+                    →
+                </button>
+            </div>
         </div>
 
         <div v-else class="text-center py-16 bg-white rounded-2xl border border-dashed border-stone-200">
@@ -451,7 +517,7 @@
             </button>
         </div>
 
-        <div class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+        <div v-if="paginatedManufacturers.length > 0" class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
             <table class="w-full text-left text-sm">
                 <thead class="bg-stone-50 border-b border-stone-200 text-stone-500 uppercase text-xs font-semibold">
                 <tr>
@@ -461,7 +527,7 @@
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-stone-100">
-                <tr v-for="m in manufacturers" :key="m.id" class="hover:bg-stone-50/50 transition">
+                <tr v-for="m in paginatedManufacturers" :key="m.id" class="hover:bg-stone-50/50 transition">
                     <td class="px-6 py-4 font-mono text-xs text-stone-400">#{{ m.id }}</td>
                     <td class="px-6 py-4 font-semibold text-stone-900">{{ m.name }}</td>
                     <td class="px-6 py-4 text-right space-x-2">
@@ -475,11 +541,32 @@
                         </button>
                     </td>
                 </tr>
-                <tr v-if="manufacturers.length === 0">
-                    <td colspan="3" class="px-6 py-8 text-center text-stone-400">Список виробників порожній</td>
-                </tr>
                 </tbody>
             </table>
+        </div>
+
+        <div v-else class="text-center py-16 bg-white rounded-2xl border border-dashed border-stone-200">
+            <p class="text-stone-400 text-base">Список виробників порожній</p>
+        </div>
+
+        <!-- Pagination Manufacturers -->
+        <div v-if="totalManufacturerPages > 1" class="mt-6 flex items-center justify-center gap-1.5">
+            <button @click="manufacturersPage--" :disabled="manufacturersPage === 1"
+                    class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-100 disabled:opacity-40 disabled:hover:bg-transparent transition">
+                ←
+            </button>
+            <template v-for="page in getVisiblePages(manufacturersPage, totalManufacturerPages)" :key="page">
+                <span v-if="page === '...'" class="px-2 py-1 text-xs text-stone-400">...</span>
+                <button v-else @click="manufacturersPage = page"
+                        :class="manufacturersPage === page ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'"
+                        class="px-3 py-1.5 rounded-xl border text-xs font-semibold transition">
+                    {{ page }}
+                </button>
+            </template>
+            <button @click="manufacturersPage++" :disabled="manufacturersPage === totalManufacturerPages"
+                    class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-100 disabled:opacity-40 disabled:hover:bg-transparent transition">
+                →
+            </button>
         </div>
     </main>
 
@@ -624,7 +711,7 @@
     <!-- ================= MODAL: DESIGN ================= -->
     <div v-if="designModal.show"
          class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-stone-100 max-h-[90vh] flex flex-col">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-xl border border-stone-100 max-h-[90vh] flex flex-col">
             <h3 class="text-lg font-bold text-stone-900 mb-4">
                 {{ designModal.isEdit ? 'Редагувати дизайн' : 'Новий дизайн' }}
             </h3>
@@ -645,7 +732,7 @@
                     </select>
                 </div>
 
-                <!-- Image Upload Input -->
+                <!-- Image Upload Input & Fitted Preview -->
                 <div>
                     <label class="block text-xs font-semibold text-stone-600 uppercase mb-1">Обкладинка дизайну</label>
                     <div class="flex items-center gap-3">
@@ -657,13 +744,13 @@
                                  file:bg-rose-50 file:text-rose-600
                                  hover:file:bg-rose-100 cursor-pointer">
                     </div>
-                    <!-- Image Preview -->
-                    <div v-if="selectedImagePreview || designForm.url" class="mt-2 h-32 w-full rounded-xl overflow-hidden border border-stone-200 bg-stone-50 flex items-center justify-center">
-                        <img :src="selectedImagePreview || designForm.url" class="h-full w-full object-cover">
+                    <!-- Image Preview with Fit Container -->
+                    <div v-if="selectedImagePreview || designForm.url" class="mt-2 h-40 w-full rounded-xl overflow-hidden border border-stone-200 bg-stone-50 flex items-center justify-center p-2">
+                        <img :src="selectedImagePreview || designForm.url" class="h-full w-full object-contain">
                     </div>
                 </div>
 
-                <!-- Dynamic Threads Section -->
+                <!-- Dynamic Threads Section with Searchable Custom Select -->
                 <div class="pt-2">
                     <div class="flex items-center justify-between mb-2">
                         <label class="block text-xs font-semibold text-stone-600 uppercase">Специфікація ниток</label>
@@ -672,21 +759,55 @@
                         </button>
                     </div>
 
-                    <div v-if="designForm.threads.length > 0" class="space-y-2">
+                    <div v-if="designForm.threads.length > 0" class="space-y-3">
                         <div v-for="(dt, index) in designForm.threads" :key="index"
-                             class="flex items-center gap-2 bg-stone-50 p-2 rounded-xl border border-stone-200/60">
+                             class="flex items-center gap-2 bg-stone-50 p-2.5 rounded-xl border border-stone-200/80">
 
-                            <select v-model="dt.threadId" required
-                                    class="flex-1 px-2.5 py-1.5 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20">
-                                <option :value="null" disabled>Нитка...</option>
-                                <option v-for="t in getAvailableThreadsFor(index)" :key="t.id" :value="t.id">
-                                    #{{ t.code }} - {{ t.name }} [Є: {{ t.inventory?.totalMeters || 0 }} м.]
-                                </option>
-                            </select>
+                            <!-- Custom Searchable Select Component -->
+                            <div class="relative flex-1">
+                                <div @click="toggleThreadDropdown(dt)"
+                                     class="w-full px-3 py-1.5 bg-white border border-stone-200 rounded-lg text-sm cursor-pointer flex justify-between items-center hover:border-rose-400 transition">
+                                    <span v-if="dt.selectedThread" class="font-medium text-stone-800">
+                                        #{{ dt.selectedThread.code }} <span class="text-stone-500 text-xs font-normal">- {{ dt.selectedThread.name }}</span>
+                                    </span>
+                                    <span v-else class="text-stone-400 text-sm">Оберіть нитку...</span>
+                                    <span class="text-stone-400 text-xs">▼</span>
+                                </div>
+
+                                <!-- Dropdown List -->
+                                <div v-if="dt.isOpen"
+                                     class="absolute z-50 left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-white border border-stone-200 rounded-xl shadow-xl divide-y divide-stone-100">
+                                    <div class="p-2 sticky top-0 bg-white border-b border-stone-100">
+                                        <input type="text"
+                                               v-model="dt.searchQuery"
+                                               placeholder="Пошук коду або назви..."
+                                               class="w-full px-2.5 py-1 bg-stone-50 border border-stone-200 rounded-lg text-xs focus:outline-none focus:border-rose-500"
+                                               @click.stop>
+                                    </div>
+
+                                    <div v-for="t in getFilteredThreadsForSelect(dt, index)" :key="t.id"
+                                         @click="selectThreadForDesign(dt, t)"
+                                         class="px-3 py-2 hover:bg-rose-50/60 cursor-pointer text-xs flex justify-between items-center transition">
+                                        <div>
+                                            <span class="font-bold text-stone-900">#{{ t.code }}</span>
+                                            <span class="text-stone-600 ml-1.5">{{ t.name }}</span>
+                                        </div>
+                                        <span :class="(t.inventory?.totalMeters || 0) > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-stone-100 text-stone-500 border-stone-200'"
+                                              class="px-2 py-0.5 rounded-md text-[10px] font-semibold border">
+                                            Є: {{ t.inventory?.totalMeters || 0 }} м
+                                        </span>
+                                    </div>
+
+                                    <div v-if="getFilteredThreadsForSelect(dt, index).length === 0"
+                                         class="px-3 py-3 text-stone-400 text-xs text-center">
+                                        Нічого не знайдено
+                                    </div>
+                                </div>
+                            </div>
 
                             <input v-model.number="dt.requiredMeters" type="number" step="0.1" min="0.1" required
                                    placeholder="Метри"
-                                   class="w-24 px-2.5 py-1.5 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20">
+                                   class="w-20 px-2.5 py-1.5 bg-white border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20">
 
                             <button type="button" @click="removeThreadFromDesignForm(index)"
                                     class="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg" title="Видалити">✕
@@ -872,17 +993,27 @@
 </div>
 
 <script>
-    const {createApp, ref, computed, onMounted} = Vue;
+    const {createApp, ref, computed, watch, onMounted} = Vue;
 
     createApp({
         setup() {
             const API_BASE = '/api/v1';
 
             const currentTab = ref('designs');
+            const threadViewMode = ref('list');
+
             const threads = ref([]);
             const manufacturers = ref([]);
             const designers = ref([]);
             const designs = ref([]);
+
+            // State tracker for Lazy Loaded Tabs
+            const loadedTabs = ref({
+                designs: false,
+                threads: false,
+                designers: false,
+                manufacturers: false
+            });
 
             const threadSearch = ref('');
             const selectedManufacturerFilter = ref(null);
@@ -895,6 +1026,28 @@
             const showShoppingModal = ref(false);
             const shoppingList = ref([]);
             const isCalculatingShoppingList = ref(false);
+
+            // Pagination State
+            const designsPage = ref(1);
+            const designsPerPage = ref(6);
+
+            const threadsPage = ref(1);
+            const threadsPerPage = ref(17);
+
+            const designersPage = ref(1);
+            const designersPerPage = ref(17);
+
+            const manufacturersPage = ref(1);
+            const manufacturersPerPage = ref(17);
+
+            // Reset page numbers when search / filter changes
+            watch([designSearch, selectedDesignerFilter], () => {
+                designsPage.value = 1;
+            });
+
+            watch([threadSearch, selectedManufacturerFilter, threadViewMode], () => {
+                threadsPage.value = 1;
+            });
 
             const toggleSelectionMode = () => {
                 isSelectionMode.value = !isSelectionMode.value;
@@ -1007,6 +1160,7 @@
                 try {
                     const res = await axios.get(`${API_BASE}/threads`);
                     threads.value = res.data;
+                    loadedTabs.value.threads = true;
                 } catch (err) {
                     showToast('Помилка завантаження ниток', true);
                 }
@@ -1016,6 +1170,7 @@
                 try {
                     const res = await axios.get(`${API_BASE}/manufacturers`);
                     manufacturers.value = res.data;
+                    loadedTabs.value.manufacturers = true;
                 } catch (err) {
                     showToast('Помилка завантаження виробників', true);
                 }
@@ -1025,6 +1180,7 @@
                 try {
                     const res = await axios.get(`${API_BASE}/designers`);
                     designers.value = res.data;
+                    loadedTabs.value.designers = true;
                 } catch (err) {
                     showToast('Помилка завантаження дизайнерів', true);
                 }
@@ -1034,9 +1190,54 @@
                 try {
                     const response = await axios.get(`${API_BASE}/designs`);
                     designs.value = response.data.content || response.data;
+                    loadedTabs.value.designs = true;
                 } catch (err) {
                     showToast('Помилка завантаження дизайнів', true);
                 }
+            };
+
+            // Tab Switcher with Lazy Loading
+            const switchTab = (tab) => {
+                currentTab.value = tab;
+                if (tab === 'threads' && !loadedTabs.value.threads) {
+                    fetchThreads();
+                } else if (tab === 'designs' && !loadedTabs.value.designs) {
+                    fetchDesigns();
+                } else if (tab === 'designers' && !loadedTabs.value.designers) {
+                    fetchDesigners();
+                } else if (tab === 'manufacturers' && !loadedTabs.value.manufacturers) {
+                    fetchManufacturers();
+                }
+            };
+
+            // Custom Searchable Select Methods for Design Form
+            const toggleThreadDropdown = (dt) => {
+                if (!dt.isOpen && !loadedTabs.value.threads) {
+                    fetchThreads();
+                }
+                dt.isOpen = !dt.isOpen;
+            };
+
+            const selectThreadForDesign = (dt, selectedThread) => {
+                dt.threadId = selectedThread.id;
+                dt.selectedThread = selectedThread;
+                dt.isOpen = false;
+                dt.searchQuery = '';
+            };
+
+            const getFilteredThreadsForSelect = (dt, currentIndex) => {
+                const query = (dt.searchQuery || '').toLowerCase();
+
+                const selectedIds = designForm.value.threads
+                    .map((item, idx) => idx !== currentIndex ? item.threadId : null)
+                    .filter(id => id !== null);
+
+                return threads.value.filter(t => {
+                    const matchesNotSelected = !selectedIds.includes(t.id);
+                    const matchesSearch = t.code.toLowerCase().includes(query) ||
+                        t.name.toLowerCase().includes(query);
+                    return matchesNotSelected && matchesSearch;
+                });
             };
 
             // Helper methods for calculating thread sufficiency
@@ -1068,15 +1269,6 @@
 
             const openDesignDetailsModal = (design) => {
                 detailsModal.value = { show: true, design };
-            };
-
-            // Filter out already selected threads for form dropdowns
-            const getAvailableThreadsFor = (currentIndex) => {
-                const selectedThreadIds = designForm.value.threads
-                    .map((dt, idx) => idx !== currentIndex ? dt.threadId : null)
-                    .filter(id => id !== null);
-
-                return threads.value.filter(t => !selectedThreadIds.includes(t.id));
             };
 
             // Designer Actions
@@ -1128,10 +1320,14 @@
             };
 
             // Design Actions
-            const openDesignModal = (d = null) => {
+            const openDesignModal = async (d = null) => {
                 selectedImageFile.value = null;
                 selectedImagePreview.value = null;
                 if (imageInput.value) imageInput.value.value = '';
+
+                if (!loadedTabs.value.threads) {
+                    await fetchThreads();
+                }
 
                 if (d) {
                     designModal.value = {show: true, isEdit: true, id: d.id};
@@ -1140,10 +1336,16 @@
                         designerId: d.designer ? d.designer.id : null,
                         url: d.url || null,
                         status: d.status || 'IN_PROGRESS',
-                        threads: d.threads ? d.threads.map(t => ({
-                            threadId: t.threadId || t.thread?.id || t.id,
-                            requiredMeters: t.requiredMeters
-                        })) : []
+                        threads: d.threads ? d.threads.map(t => {
+                            const threadObj = threads.value.find(item => item.id === (t.threadId || t.thread?.id || t.id));
+                            return {
+                                threadId: t.threadId || t.thread?.id || t.id,
+                                requiredMeters: t.requiredMeters,
+                                selectedThread: threadObj || null,
+                                isOpen: false,
+                                searchQuery: ''
+                            };
+                        }) : []
                     };
                 } else {
                     designModal.value = {show: true, isEdit: false, id: null};
@@ -1163,7 +1365,10 @@
 
                 designForm.value.threads.push({
                     threadId: availableThread ? availableThread.id : null,
-                    requiredMeters: 1.0
+                    selectedThread: availableThread || null,
+                    requiredMeters: 1.0,
+                    isOpen: false,
+                    searchQuery: ''
                 });
             };
 
@@ -1194,7 +1399,6 @@
 
                     const designId = savedDesignResponse.data.id || designModal.value.id;
 
-                    // If a image file was picked, upload it separately
                     if (selectedImageFile.value && designId) {
                         const formData = new FormData();
                         formData.append('file', selectedImageFile.value);
@@ -1335,10 +1539,11 @@
                     showInventoryModal.value = false;
                     showToast(inventoryMode.value === 'add' ? 'Запас поповнено' : 'Залишки оновлено');
                     await fetchThreads();
-                    await fetchDesigns();
+                    if (loadedTabs.value.designs) {
+                        await fetchDesigns();
+                    }
                 } catch (e) {
                     showToast('Помилка збереження інвентарю', true);
-                    console.error("Помилка збереження інвентарю", e);
                 }
             };
 
@@ -1367,17 +1572,55 @@
                 });
             });
 
+            // Paginated Computeds
+            const totalDesignPages = computed(() => Math.ceil(filteredDesigns.value.length / designsPerPage.value) || 1);
+            const paginatedDesigns = computed(() => {
+                const start = (designsPage.value - 1) * designsPerPage.value;
+                return filteredDesigns.value.slice(start, start + designsPerPage.value);
+            });
+
+            const totalThreadPages = computed(() => Math.ceil(filteredThreads.value.length / threadsPerPage.value) || 1);
+            const paginatedThreads = computed(() => {
+                const start = (threadsPage.value - 1) * threadsPerPage.value;
+                return filteredThreads.value.slice(start, start + threadsPerPage.value);
+            });
+
+            const totalDesignerPages = computed(() => Math.ceil(designers.value.length / designersPerPage.value) || 1);
+            const paginatedDesigners = computed(() => {
+                const start = (designersPage.value - 1) * designersPerPage.value;
+                return designers.value.slice(start, start + designersPerPage.value);
+            });
+
+            const totalManufacturerPages = computed(() => Math.ceil(manufacturers.value.length / manufacturersPerPage.value) || 1);
+            const paginatedManufacturers = computed(() => {
+                const start = (manufacturersPage.value - 1) * manufacturersPerPage.value;
+                return manufacturers.value.slice(start, start + manufacturersPerPage.value);
+            });
+
+            // Helper for smart page buttons with ellipsis (...)
+            const getVisiblePages = (currentPage, totalPages) => {
+                if (totalPages <= 7) {
+                    return Array.from({ length: totalPages }, (_, i) => i + 1);
+                }
+                if (currentPage <= 4) {
+                    return [1, 2, 3, 4, 5, '...', totalPages];
+                }
+                if (currentPage >= totalPages - 3) {
+                    return [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+                }
+                return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+            };
+
+            // On initial load: fetch light option metadata and only the active tab data
             onMounted(() => {
-                fetchThreads();
                 fetchManufacturers();
                 fetchDesigners();
                 fetchDesigns();
             });
 
-            const threadViewMode = ref('list');
-
             return {
                 currentTab,
+                switchTab,
                 threads,
                 manufacturers,
                 designers,
@@ -1388,6 +1631,19 @@
                 selectedDesignerFilter,
                 filteredThreads,
                 filteredDesigns,
+                designsPage,
+                totalDesignPages,
+                paginatedDesigns,
+                threadsPage,
+                totalThreadPages,
+                paginatedThreads,
+                designersPage,
+                totalDesignerPages,
+                paginatedDesigners,
+                manufacturersPage,
+                totalManufacturerPages,
+                paginatedManufacturers,
+                getVisiblePages,
                 isSelectionMode,
                 selectedDesignIds,
                 showShoppingModal,
@@ -1401,7 +1657,6 @@
                 expandedDesignIds,
                 toggleExpandDesign,
                 getVisibleThreads,
-                getAvailableThreadsFor,
                 toast,
                 threadModal,
                 threadForm,
@@ -1440,7 +1695,10 @@
                 inventoryForm,
                 openInventoryModal,
                 saveInventory,
-                threadViewMode
+                threadViewMode,
+                toggleThreadDropdown,
+                selectThreadForDesign,
+                getFilteredThreadsForSelect
             };
         }
     }).mount('#app');
