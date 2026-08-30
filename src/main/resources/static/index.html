@@ -712,9 +712,7 @@
     <div v-if="designModal.show"
          class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-xl border border-stone-100 max-h-[90vh] flex flex-col">
-            <h3 class="text-lg font-bold text-stone-900 mb-4">
-                {{ designModal.isEdit ? 'Редагувати дизайн' : 'Новий дизайн' }}
-            </h3>
+            <h2 class="text-lg font-bold text-stone-900 mb-4">Редагувати дизайн</h2>
 
             <form @submit.prevent="saveDesign" class="space-y-4 overflow-y-auto pr-1 flex-1">
                 <div>
@@ -750,14 +748,9 @@
                     </div>
                 </div>
 
-                <!-- Dynamic Threads Section with Searchable Custom Select -->
+                <!-- 1. Список ниток -->
                 <div class="pt-2">
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="block text-xs font-semibold text-stone-600 uppercase">Специфікація ниток</label>
-                        <button type="button" @click="addThreadToDesignForm"
-                                class="text-xs text-rose-600 hover:text-rose-700 font-semibold">+ Додати нитку
-                        </button>
-                    </div>
+                    <label class="block text-xs font-semibold text-stone-600 uppercase mb-2">Специфікація ниток</label>
 
                     <div v-if="designForm.threads.length > 0" class="space-y-3">
                         <div v-for="(dt, index) in designForm.threads" :key="index"
@@ -814,17 +807,24 @@
                             </button>
                         </div>
                     </div>
-                    <p v-else
-                       class="text-xs text-stone-400 text-center py-3 border border-dashed border-stone-200 rounded-xl">
-                        Натисніть "+ Додати нитку" для вибору палітри</p>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-4 border-t border-stone-100">
+                <!-- 2. Кнопка «Додати нитку» одразу під списком -->
+                <div class="mt-3 mb-6">
+                    <button type="button"
+                            @click="addThreadToDesignForm"
+                            class="w-full py-2.5 bg-transparent border-2 border-dashed border-rose-500 text-rose-600 rounded-xl font-semibold cursor-pointer transition hover:bg-rose-50 text-sm">
+                        + Додати нитку
+                    </button>
+                </div>
+
+                <!-- 3. Головні дії форми в самому низу -->
+                <div class="flex justify-end gap-3 pt-4 border-t border-stone-100">
                     <button type="button" @click="designModal.show = false"
                             class="px-4 py-2 text-sm text-stone-600 hover:bg-stone-100 rounded-xl transition">Скасувати
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 text-sm bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl transition">
+                            class="px-4 py-2 text-sm bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl transition">
                         Зберегти
                     </button>
                 </div>
