@@ -616,11 +616,11 @@
                         <td class="p-3 font-medium text-stone-600">{{ item.manufacturerName }}</td>
                         <td class="p-3 font-bold text-stone-900">#{{ item.code }}</td>
                         <td class="p-3 text-stone-600">{{ item.threadName }}</td>
-                        <td class="p-3 text-right font-medium text-stone-800">{{ item.requiredQuantity }} шт.</td>
-                        <td class="p-3 text-right font-medium text-stone-600">{{ item.inStockQuantity }} шт.</td>
+                        <td class="p-3 text-right font-medium text-stone-800">{{ item.requiredQuantity }} м.</td>
+                        <td class="p-3 text-right font-medium text-stone-600">{{ item.inStockQuantity }} м.</td>
                         <td class="p-3 text-right">
                             <span v-if="item.toBuyQuantity > 0" class="px-2 py-1 bg-rose-100 text-rose-700 font-bold rounded-lg text-xs">
-                                +{{ item.toBuyQuantity }} шт.
+                                +{{ item.toBuyQuantity }} м.
                             </span>
                             <span v-else class="text-stone-400 text-xs">—</span>
                         </td>

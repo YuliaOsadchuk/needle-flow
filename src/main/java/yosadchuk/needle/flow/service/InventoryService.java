@@ -1,9 +1,10 @@
 package yosadchuk.needle.flow.service;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import yosadchuk.needle.flow.exception.BadRequestException;
 import yosadchuk.needle.flow.exception.ResourceNotFoundException;
 import yosadchuk.needle.flow.model.dto.AddInventoryRequestDto;
 import yosadchuk.needle.flow.model.entity.Inventory;
@@ -16,7 +17,7 @@ public class InventoryService {
     private final InventoryRepository inventoryRepository;
 
     @Transactional
-    public void addStock(AddInventoryRequestDto dto) throws BadRequestException {
+    public void addStock(AddInventoryRequestDto dto) {
         if (dto.addBobbinMeters() == null || dto.addSkeins() == null) {
             throw new BadRequestException("One of the fields must be filled in");
         }
@@ -29,7 +30,7 @@ public class InventoryService {
     }
 
     @Transactional
-    public void updateStock(AddInventoryRequestDto dto) throws BadRequestException {
+    public void updateStock(AddInventoryRequestDto dto) {
         if (dto.addBobbinMeters() == null || dto.addSkeins() == null) {
             throw new BadRequestException("One of the fields must be filled in");
         }

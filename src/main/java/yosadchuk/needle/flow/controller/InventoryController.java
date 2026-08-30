@@ -1,7 +1,6 @@
 package yosadchuk.needle.flow.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,13 +17,13 @@ public class InventoryController {
     private final InventoryService inventoryService;
 
     @PostMapping("/add")
-    public ResponseEntity<Void> addStock(@RequestBody AddInventoryRequestDto dto) throws BadRequestException {
+    public ResponseEntity<Void> addStock(@RequestBody AddInventoryRequestDto dto) {
         inventoryService.addStock(dto);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/update")
-    public ResponseEntity<Void> updateStock(@RequestBody AddInventoryRequestDto dto) throws BadRequestException {
+    public ResponseEntity<Void> updateStock(@RequestBody AddInventoryRequestDto dto) {
         inventoryService.updateStock(dto);
         return ResponseEntity.noContent().build();
     }

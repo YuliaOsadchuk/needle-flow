@@ -1,6 +1,5 @@
 package yosadchuk.needle.flow.controller;
 
-import org.apache.coyote.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -11,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
+import yosadchuk.needle.flow.exception.BadRequestException;
 import yosadchuk.needle.flow.exception.ResourceNotFoundException;
 import yosadchuk.needle.flow.model.dto.AddInventoryRequestDto;
 import yosadchuk.needle.flow.service.InventoryService;
