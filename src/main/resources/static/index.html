@@ -276,15 +276,31 @@
     <!-- ================= THREADS TAB ================= -->
     <main v-if="currentTab === 'threads'">
         <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6">
-            <div class="flex flex-1 flex-col sm:flex-row gap-3">
+            <div class="flex flex-1 flex-col sm:flex-row gap-3 items-center">
                 <input v-model="threadSearch" type="text" placeholder="Пошук за кодом або назвою..."
-                       class="px-4 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 flex-1">
+                       class="px-4 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 flex-1 w-full">
 
                 <select v-model="selectedManufacturerFilter"
-                        class="px-4 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500">
+                        class="px-4 py-2 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 w-full sm:w-auto">
                     <option :value="null">Всі виробники</option>
                     <option v-for="m in manufacturers" :key="m.id" :value="m.id">{{ m.name }}</option>
                 </select>
+
+                <!-- Toggle View Mode Buttons -->
+                <div class="flex items-center bg-stone-200/60 p-1 rounded-xl">
+                    <button @click="threadViewMode = 'grid'"
+                            :class="threadViewMode === 'grid' ? 'bg-white shadow-sm text-stone-900' : 'text-stone-500 hover:text-stone-800'"
+                            class="p-1.5 rounded-lg text-xs font-semibold transition"
+                            title="Відображення картками">
+                        🔲 Картки
+                    </button>
+                    <button @click="threadViewMode = 'list'"
+                            :class="threadViewMode === 'list' ? 'bg-white shadow-sm text-stone-900' : 'text-stone-500 hover:text-stone-800'"
+                            class="p-1.5 rounded-lg text-xs font-semibold transition"
+                            title="Відображення списком">
+                        ☰ Список
+                    </button>
+                </div>
             </div>
 
             <button @click="openThreadModal()"
@@ -293,63 +309,129 @@
             </button>
         </div>
 
-        <div v-if="filteredThreads.length > 0"
-             class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div v-for="t in filteredThreads" :key="t.id"
-                 class="bg-white border border-stone-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md transition flex flex-col justify-between group">
-                <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="px-2.5 py-1 bg-stone-100 text-stone-600 rounded-lg text-xs font-semibold uppercase tracking-wider">
-                            {{ t.manufacturer ? t.manufacturer.name : 'Unassigned' }}
-                        </span>
-                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+        <div v-if="filteredThreads.length > 0">
+            <!-- 1. Grid View (Картки) -->
+            <div v-if="threadViewMode === 'grid'"
+                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div v-for="t in filteredThreads" :key="t.id"
+                     class="bg-white border border-stone-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md transition flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2.5 py-1 bg-stone-100 text-stone-600 rounded-lg text-xs font-semibold uppercase tracking-wider">
+                                {{ t.manufacturer ? t.manufacturer.name : 'Unassigned' }}
+                            </span>
+                            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                                <button @click="openThreadModal(t)"
+                                        class="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100"
+                                        title="Редагувати">✏️
+                                </button>
+                                <button @click="deleteThread(t.id)"
+                                        class="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-100"
+                                        title="Видалити">🗑️
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-baseline gap-2 mb-1">
+                            <span class="text-2xl font-black text-stone-900 tracking-tight">#{{ t.code }}</span>
+                        </div>
+                        <p class="text-sm text-stone-600 line-clamp-1 mb-3">{{ t.name }}</p>
+
+                        <!-- Інформація про запаси -->
+                        <div class="bg-stone-50 p-2.5 rounded-xl border border-stone-100 text-xs space-y-1 mb-2">
+                            <div class="flex justify-between text-stone-600">
+                                <span>Мотків:</span>
+                                <strong class="text-stone-900">{{ t.inventory?.skeinsQuantity || 0 }} шт.</strong>
+                            </div>
+                            <div class="flex justify-between text-stone-600">
+                                <span>Залишок на бобіні:</span>
+                                <strong class="text-stone-900">{{ t.inventory?.bobbinMeters || 0 }} м</strong>
+                            </div>
+                            <div class="flex justify-between text-stone-600">
+                                <span>Всього доступно:</span>
+                                <strong class="text-emerald-700">{{ t.inventory?.totalMeters || 0 }} м</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
+                        <span>ID: {{ t.id }}</span>
+                        <div class="flex items-center gap-1">
+                            <button @click="openInventoryModal(t, 'add')"
+                                    class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 rounded-lg font-medium transition">
+                                + Поповнити
+                            </button>
+                            <button @click="openInventoryModal(t, 'update')"
+                                    title="Встановити точний залишок"
+                                    class="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition">
+                                ✏️
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. List View (Компактна таблиця як у Виробниках) -->
+            <div v-else class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-stone-50 border-b border-stone-200 text-stone-500 uppercase text-xs font-semibold">
+                    <tr>
+                        <th class="px-4 py-3.5">Виробник</th>
+                        <th class="px-4 py-3.5">Код</th>
+                        <th class="px-4 py-3.5">Назва</th>
+                        <th class="px-4 py-3.5 text-center">Мотків</th>
+                        <th class="px-4 py-3.5 text-center">Бобіна</th>
+                        <th class="px-4 py-3.5 text-center">Всього</th>
+                        <th class="px-4 py-3.5 text-right">Запаси</th>
+                        <th class="px-4 py-3.5 text-right">Дії</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-stone-100">
+                    <tr v-for="t in filteredThreads" :key="t.id" class="hover:bg-stone-50/50 transition">
+                        <td class="px-4 py-3 text-xs font-semibold text-stone-500">
+                            {{ t.manufacturer ? t.manufacturer.name : '—' }}
+                        </td>
+                        <td class="px-4 py-3 font-bold text-stone-900 font-mono text-base">
+                            #{{ t.code }}
+                        </td>
+                        <td class="px-4 py-3 text-stone-700">
+                            {{ t.name }}
+                        </td>
+                        <td class="px-4 py-3 text-center text-stone-900 font-medium">
+                            {{ t.inventory?.skeinsQuantity || 0 }} шт.
+                        </td>
+                        <td class="px-4 py-3 text-center text-stone-900 font-medium">
+                            {{ t.inventory?.bobbinMeters || 0 }} м
+                        </td>
+                        <td class="px-4 py-3 text-center text-emerald-700 font-bold">
+                            {{ t.inventory?.totalMeters || 0 }} м
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <button @click="openInventoryModal(t, 'add')"
+                                        class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 rounded-lg text-xs font-medium transition">
+                                    + Поповнити
+                                </button>
+                                <button @click="openInventoryModal(t, 'update')"
+                                        title="Встановити точний залишок"
+                                        class="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition">
+                                    ✏️
+                                </button>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-right space-x-1">
                             <button @click="openThreadModal(t)"
-                                    class="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100"
+                                    class="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition"
                                     title="Редагувати">✏️
                             </button>
                             <button @click="deleteThread(t.id)"
-                                    class="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-100"
+                                    class="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
                                     title="Видалити">🗑️
                             </button>
-                        </div>
-                    </div>
-
-                    <div class="flex items-baseline gap-2 mb-1">
-                        <span class="text-2xl font-black text-stone-900 tracking-tight">#{{ t.code }}</span>
-                    </div>
-                    <p class="text-sm text-stone-600 line-clamp-1 mb-3">{{ t.name }}</p>
-
-                    <!-- Інформація про запаси -->
-                    <div class="bg-stone-50 p-2.5 rounded-xl border border-stone-100 text-xs space-y-1 mb-2">
-                        <div class="flex justify-between text-stone-600">
-                            <span>Мотків:</span>
-                            <strong class="text-stone-900">{{ t.inventory?.skeinsQuantity || 0 }} шт.</strong>
-                        </div>
-                        <div class="flex justify-between text-stone-600">
-                            <span>Залишок на бобіні:</span>
-                            <strong class="text-stone-900">{{ t.inventory?.bobbinMeters || 0 }} м</strong>
-                        </div>
-                        <div class="flex justify-between text-stone-600">
-                            <span>Всього доступно:</span>
-                            <strong class="text-emerald-700">{{ t.inventory?.totalMeters || 0 }} м</strong>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
-                    <span>ID: {{ t.id }}</span>
-                    <div class="flex items-center gap-1">
-                        <button @click="openInventoryModal(t, 'add')"
-                                class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 rounded-lg font-medium transition">
-                            + Поповнити
-                        </button>
-                        <button @click="openInventoryModal(t, 'update')"
-                                title="Встановити точний залишок"
-                                class="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition">
-                            ✏️
-                        </button>
-                    </div>
-                </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -1292,6 +1374,8 @@
                 fetchDesigns();
             });
 
+            const threadViewMode = ref('list');
+
             return {
                 currentTab,
                 threads,
@@ -1355,7 +1439,8 @@
                 inventoryMode,
                 inventoryForm,
                 openInventoryModal,
-                saveInventory
+                saveInventory,
+                threadViewMode
             };
         }
     }).mount('#app');
