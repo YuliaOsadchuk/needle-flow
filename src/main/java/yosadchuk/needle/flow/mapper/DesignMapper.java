@@ -77,7 +77,7 @@ public class DesignMapper {
             } else {
                 Thread thread = threadsMap.get(dto.threadId());
                 if (thread == null) {
-                    throw new ResourceNotFoundException("Thread with id " + dto.threadId() + " not found");
+                    throw ResourceNotFoundException.of("Thread", dto.threadId());
                 }
 
                 DesignThread dt = new DesignThread();

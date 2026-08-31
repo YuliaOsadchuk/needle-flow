@@ -30,13 +30,13 @@ public class ManufacturerService {
 
     public ManufacturerResponseDto findById(Integer id) {
         return manufacturerRepository.findById(id).map(manufacturerMapper::toDto)
-                .orElseThrow(() -> new ResourceNotFoundException("Manufacturer with id " + id + " not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Manufacturer", id));
     }
 
     @Transactional
     public ManufacturerResponseDto create(CreateManufacturerDto dto) {
         if (manufacturerRepository.existsByName(dto.name())) {
-            throw new ResourceAlreadyExistsException("Manufacturer with name " + dto.name() + " already exists");
+            throw ResourceAlreadyExistsException.of("Manufacturer", dto.name());
         }
         Manufacturer savedEntity = manufacturerRepository.save(manufacturerMapper.toEntity(dto));
         return manufacturerMapper.toDto(savedEntity);
@@ -45,11 +45,11 @@ public class ManufacturerService {
     @Transactional
     public ManufacturerResponseDto update(Integer id, CreateManufacturerDto dto) {
         Manufacturer entity = manufacturerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Manufacturer with id " + id + " not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Manufacturer", id));
 
         boolean isNameChanged = !entity.getName().equalsIgnoreCase(dto.name());
         if (isNameChanged && manufacturerRepository.existsByName(dto.name())) {
-            throw new ResourceAlreadyExistsException("Manufacturer with name " + dto.name() + " already exists");
+            throw ResourceAlreadyExistsException.of("Manufacturer", dto.name());
         }
 
         manufacturerMapper.updateEntityFromDto(dto, entity);
@@ -59,7 +59,7 @@ public class ManufacturerService {
     @Transactional
     public void delete(Integer id) {
         if (!manufacturerRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Manufacturer with id " + id + " not found");
+            throw ResourceNotFoundException.of("Manufacturer", id);
         }
 
         if (threadRepository.existsByManufacturerId(id)) {

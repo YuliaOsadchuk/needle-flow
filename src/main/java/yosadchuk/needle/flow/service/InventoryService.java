@@ -23,7 +23,7 @@ public class InventoryService {
         }
 
         Inventory inventory = inventoryRepository.findByThreadId(dto.threadId())
-                .orElseThrow(() -> new ResourceNotFoundException("Inventory with thread id " + dto.threadId() + " not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Inventory", dto.threadId()));
 
         inventory.setBobbinQuantity(inventory.getBobbinQuantity().add(dto.addBobbinMeters()));
         inventory.setSkeinQuantity(inventory.getSkeinQuantity() + dto.addSkeins());
@@ -36,7 +36,7 @@ public class InventoryService {
         }
 
         Inventory inventory = inventoryRepository.findByThreadId(dto.threadId())
-                .orElseThrow(() -> new ResourceNotFoundException("Inventory with thread id " + dto.threadId() + " not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Inventory", dto.threadId()));
 
         inventory.setBobbinQuantity(dto.addBobbinMeters());
         inventory.setSkeinQuantity(dto.addSkeins());

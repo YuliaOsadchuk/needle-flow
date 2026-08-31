@@ -35,7 +35,7 @@ public class ThreadService {
 
     public ThreadResponseDto findById(Integer id) {
         return threadRepository.findById(id).map(mapper::toDto)
-                .orElseThrow(() -> new ResourceNotFoundException("Thread with id " + id + " not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Thread", id));
     }
 
     @Transactional
@@ -45,7 +45,7 @@ public class ThreadService {
         }
 
         Manufacturer manufacturer = manufacturerRepository.findById(dto.manufacturerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Manufacturer with id " + dto.manufacturerId() + " not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Manufacturer", dto.manufacturerId()));
 
         Thread entity = mapper.toEntity(dto);
         entity.setManufacturer(manufacturer);
@@ -66,7 +66,7 @@ public class ThreadService {
     @Transactional
     public ThreadResponseDto update(Integer id, CreateThreadDto dto) {
         Thread entity = threadRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Thread with id " + id + " not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Thread", id));
 
         boolean isCodeOrManufacturerChanged = !entity.getCode().equals(dto.code())
                 || !entity.getManufacturer().getId().equals(dto.manufacturerId());
@@ -79,7 +79,7 @@ public class ThreadService {
 
         if (!entity.getManufacturer().getId().equals(dto.manufacturerId())) {
             Manufacturer manufacturer = manufacturerRepository.findById(dto.manufacturerId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Manufacturer with id " + dto.manufacturerId() + " not found"));
+                    .orElseThrow(() -> ResourceNotFoundException.of("Manufacturer", dto.manufacturerId()));
             entity.setManufacturer(manufacturer);
         }
         return mapper.toDto(entity);
@@ -88,7 +88,7 @@ public class ThreadService {
     @Transactional
     public void delete(Integer id) {
         if (!threadRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Thread with id " + id + " not found");
+            throw ResourceNotFoundException.of("Thread", id);
         }
         threadRepository.deleteById(id);
     }

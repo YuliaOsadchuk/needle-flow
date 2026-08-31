@@ -27,7 +27,7 @@ public class DesignerService {
 
     public DesignerResponseDto findById(Integer id) {
         return designerRepository.findById(id).map(designerMapper::toDto)
-                .orElseThrow(() -> new ResourceNotFoundException("Designer with id " + id + " not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Designer", id));
     }
 
     @Transactional
@@ -43,7 +43,7 @@ public class DesignerService {
     @Transactional
     public DesignerResponseDto update(Integer id, CreateDesignerDto dto) {
         Designer entity = designerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Designer with id " + id + " not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Designer", id));
 
         boolean isNameChanged = !entity.getName().equalsIgnoreCase(dto.name());
         if (isNameChanged && designerRepository.existsByName(dto.name())) {
@@ -57,7 +57,7 @@ public class DesignerService {
     @Transactional
     public void delete(Integer id) {
         if (!designerRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Designer with id " + id + " not found");
+            throw ResourceNotFoundException.of("Designer", id);
         }
 
         designerRepository.deleteById(id);

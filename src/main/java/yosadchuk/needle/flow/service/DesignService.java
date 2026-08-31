@@ -44,7 +44,7 @@ public class DesignService {
 
     public DesignResponseDto findById(Integer id) {
         return designRepository.findByIdWithDetails(id).map(designMapper::toDto)
-                .orElseThrow(() -> new ResourceNotFoundException("Design with id " + id + " not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Design", id));
     }
 
     @Transactional
@@ -54,7 +54,7 @@ public class DesignService {
         }
 
         Designer designer = designerRepository.findById(dto.designer())
-                .orElseThrow(() -> new ResourceNotFoundException("Designer with id " + dto.designer() + " not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Designer", dto.designer()));
         Design entity = designMapper.toEntity(dto);
         entity.setDesigner(designer);
 
@@ -73,7 +73,7 @@ public class DesignService {
     @Transactional
     public DesignResponseDto update(Integer id, CreateDesignDto dto) {
         Design entity = designRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Design with id " + id + " not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Design", id));
 
         boolean isNameOrDesignerChanged = !entity.getName().equals(dto.name())
                 || !entity.getDesigner().getId().equals(dto.designer());
@@ -91,7 +91,7 @@ public class DesignService {
         designMapper.updateEntityFromDto(dto, entity, threadsMap);
         if (!entity.getDesigner().getId().equals(dto.designer())) {
             Designer designer = designerRepository.findById(dto.designer())
-                    .orElseThrow(() -> new ResourceNotFoundException("Designer with id " + dto.designer() + " not found"));
+                    .orElseThrow(() -> ResourceNotFoundException.of("Designer", dto.designer()));
             entity.setDesigner(designer);
         }
         return designMapper.toDto(entity);
@@ -99,7 +99,7 @@ public class DesignService {
 
     @Transactional
     public void delete(Integer id) {
-        Design design = designRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Design with id " + id + " not found"));
+        Design design = designRepository.findById(id).orElseThrow(() -> ResourceNotFoundException.of("Design", id));
 
         if (design.getImageUrl() != null) {
             deleteImageFile(design.getImageUrl());
@@ -111,7 +111,7 @@ public class DesignService {
     @Transactional
     public DesignResponseDto updateImageUrl(Integer id, String imagePath) {
         Design entity = designRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Design with id " + id + " not found"));
+                .orElseThrow(() -> ResourceNotFoundException.of("Design", id));
 
         entity.setImageUrl(imagePath);
         return designMapper.toDto(entity);
@@ -162,7 +162,7 @@ public class DesignService {
     private List<DesignThread> getDesignThreadsList(CreateDesignDto dto, Design entity) {
         return dto.threads().stream().map(threadDto -> {
             Thread thread = threadRepository.findById(threadDto.threadId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Thread with id " + threadDto.threadId() + " not found"));
+                    .orElseThrow(() -> ResourceNotFoundException.of("Thread", threadDto.threadId()));
 
             DesignThread designThread = new DesignThread();
             designThread.setDesign(entity);
