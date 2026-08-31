@@ -1280,6 +1280,10 @@
 
                 await fetchAllThreads();
 
+                if (!loadedTabs.value.designers) {
+                    await fetchDesigners();
+                }
+
                 if (d) {
                     designModal.value = {show: true, isEdit: true, id: d.id};
                     designForm.value = {
