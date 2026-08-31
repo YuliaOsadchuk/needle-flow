@@ -1185,7 +1185,7 @@
                     .map((item, idx) => idx !== currentIndex ? item.threadId : null)
                     .filter(id => id !== null);
 
-                return threads.value.filter(t => {
+                return allThreads.value.filter(t => {
                     const matchesNotSelected = !selectedIds.includes(t.id);
                     const matchesSearch = t.code.toLowerCase().includes(query) ||
                         t.name.toLowerCase().includes(query);
@@ -1199,7 +1199,7 @@
                     return dt.availableMeters;
                 }
                 const threadId = dt.threadId || dt.thread?.id || dt.id;
-                const foundThread = threads.value.find(t => t.id === threadId);
+                const foundThread = allThreads.value.find(t => t.id === threadId);
                 return foundThread?.inventory?.totalMeters || 0;
             };
 
@@ -1278,9 +1278,7 @@
                 selectedImagePreview.value = null;
                 if (imageInput.value) imageInput.value.value = '';
 
-                if (!loadedTabs.value.threads) {
-                    await fetchThreads();
-                }
+                await fetchAllThreads();
 
                 if (d) {
                     designModal.value = {show: true, isEdit: true, id: d.id};
@@ -1290,7 +1288,7 @@
                         url: d.url || null,
                         status: d.status || 'IN_PROGRESS',
                         threads: d.threads ? d.threads.map(t => {
-                            const threadObj = threads.value.find(item => item.id === (t.threadId || t.thread?.id || t.id));
+                            const threadObj = allThreads.value.find(item => item.id === (t.threadId || t.thread?.id || t.id));
                             return {
                                 threadId: t.threadId || t.thread?.id || t.id,
                                 requiredMeters: t.requiredMeters,
@@ -1314,7 +1312,7 @@
 
             const addThreadToDesignForm = () => {
                 const selectedIds = designForm.value.threads.map(t => t.threadId);
-                const availableThread = threads.value.find(t => !selectedIds.includes(t.id));
+                const availableThread = allThreads.value.find(t => !selectedIds.includes(t.id));
 
                 designForm.value.threads.push({
                     threadId: availableThread ? availableThread.id : null,
@@ -1380,6 +1378,17 @@
             };
 
             // Thread Actions
+            const allThreads = ref([]);
+
+            const fetchAllThreads = async () => {
+                try {
+                    const res = await axios.get(`${API_BASE}/threads/options`);
+                    allThreads.value = res.data;
+                } catch (err) {
+                    showToast('Помилка завантаження списку ниток', true);
+                }
+            };
+
             const openThreadModal = (thread = null) => {
                 if (thread) {
                     threadModal.value = {show: true, isEdit: true, id: thread.id};
@@ -1603,7 +1612,9 @@
                 threadViewMode,
                 toggleThreadDropdown,
                 selectThreadForDesign,
-                getFilteredThreadsForSelect
+                getFilteredThreadsForSelect,
+                allThreads,
+                fetchAllThreads
             };
         }
     }).mount('#app');

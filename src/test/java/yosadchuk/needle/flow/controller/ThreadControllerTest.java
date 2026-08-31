@@ -48,7 +48,7 @@ public class ThreadControllerTest {
 
         when(service.findAll()).thenReturn(mockResponseBody);
 
-        mockMvc.perform(get("/api/v1/threads"))
+        mockMvc.perform(get("/api/v1/threads/options"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.length()").value(2))
@@ -65,7 +65,7 @@ public class ThreadControllerTest {
     void findAll_shouldReturnOkAndEmptyList_whenNoThreads() throws Exception {
         when(service.findAll()).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/v1/threads"))
+        mockMvc.perform(get("/api/v1/threads/options"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.length()").value(0));

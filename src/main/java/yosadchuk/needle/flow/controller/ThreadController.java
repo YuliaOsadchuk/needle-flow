@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import yosadchuk.needle.flow.model.dto.*;
 import yosadchuk.needle.flow.service.ThreadService;
 
+import java.util.List;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -19,15 +21,23 @@ public class ThreadController {
 
     private final ThreadService threadService;
 
+    @GetMapping("/options")
+    public ResponseEntity<List<ThreadResponseDto>> findAll() {
+        log.info("[Thread][find all options] request");
+        List<ThreadResponseDto> response = threadService.findAll();
+        log.info("[Thread][find all options] count: {}", response.size());
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping
-    public ResponseEntity<PageResponseDto<ThreadResponseDto>> findAll(
+    public ResponseEntity<PageResponseDto<ThreadResponseDto>> findAllPaged(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "15") int size,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Integer manufacturerId) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id"));
         log.info("[Thread][find all] page: {}, size: {}, search: {}, manufacturerId: {}, ", page, size, search, manufacturerId);
-        return ResponseEntity.ok(threadService.findAll(pageable, search, manufacturerId));
+        return ResponseEntity.ok(threadService.findAllPaged(pageable, search, manufacturerId));
     }
 
     @GetMapping("/{id}")

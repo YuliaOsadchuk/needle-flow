@@ -21,6 +21,7 @@ import yosadchuk.needle.flow.repository.ThreadRepository;
 import yosadchuk.needle.flow.repository.spec.ThreadSpecifications;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +32,11 @@ public class ThreadService {
     private final InventoryRepository inventoryRepository;
     private final ThreadMapper mapper;
 
-    public PageResponseDto<ThreadResponseDto> findAll(Pageable pageable, String search, Integer manufacturerId) {
+    public List<ThreadResponseDto> findAll() {
+        return threadRepository.findAllWithDetails().stream().map(mapper::toDto).toList();
+    }
+
+    public PageResponseDto<ThreadResponseDto> findAllPaged(Pageable pageable, String search, Integer manufacturerId) {
         Specification<Thread> spec = Specification.where(ThreadSpecifications.withDetails())
                 .and(ThreadSpecifications.hasSearch(search))
                 .and(ThreadSpecifications.hasManufacturer(manufacturerId));
