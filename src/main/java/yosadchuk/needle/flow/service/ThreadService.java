@@ -1,6 +1,7 @@
 package yosadchuk.needle.flow.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import yosadchuk.needle.flow.exception.ResourceAlreadyExistsException;
@@ -18,6 +19,7 @@ import yosadchuk.needle.flow.repository.ThreadRepository;
 import java.math.BigDecimal;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -55,6 +57,7 @@ public class ThreadService {
         inventory.setSkeinQuantity(0);
 
         inventoryRepository.save(inventory);
+        log.info("[Inventory] created : {}", inventory);
         entity.setInventory(inventory);
 
         return mapper.toDto(entity);

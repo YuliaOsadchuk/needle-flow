@@ -83,11 +83,11 @@ public class DesignerControllerTest {
     }
 
     @Test
-    void save_shouldReturnCreatedAndNewDesigner() throws Exception {
+    void create_shouldReturnCreatedAndNewDesigner() throws Exception {
         CreateDesignerDto createDto = new CreateDesignerDto("Dimensions");
         DesignerResponseDto responseDto = new DesignerResponseDto(1, "Dimensions");
 
-        when(service.save(createDto)).thenReturn(responseDto);
+        when(service.create(createDto)).thenReturn(responseDto);
 
         mockMvc.perform(post("/api/v1/designers")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -98,10 +98,10 @@ public class DesignerControllerTest {
     }
 
     @Test
-    void save_shouldReturn409_whenDesignerAlreadyExists() throws Exception {
+    void create_shouldReturn409_whenDesignerAlreadyExists() throws Exception {
         CreateDesignerDto createDto = new CreateDesignerDto("Dimensions");
 
-        when(service.save(createDto))
+        when(service.create(createDto))
                 .thenThrow(new ResourceAlreadyExistsException("Designer with name Dimensions already exists"));
 
         mockMvc.perform(post("/api/v1/designers")

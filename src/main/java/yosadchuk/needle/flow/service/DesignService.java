@@ -48,7 +48,7 @@ public class DesignService {
     }
 
     @Transactional
-    public DesignResponseDto save(CreateDesignDto dto) {
+    public DesignResponseDto create(CreateDesignDto dto) {
         if (designRepository.existsByNameAndDesignerId(dto.name(), dto.designer())) {
             throw new ResourceAlreadyExistsException("Design with name " + dto.name() + " for designer already exists");
         }

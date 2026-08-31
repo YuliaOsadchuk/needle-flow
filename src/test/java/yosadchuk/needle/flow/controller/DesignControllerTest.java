@@ -105,7 +105,7 @@ class DesignControllerTest {
     }
 
     @Test
-    void save_shouldReturnCreatedAndNewDesign() throws Exception {
+    void create_shouldReturnCreatedAndNewDesign() throws Exception {
         List<DesignThreadRequestDto> threadsResponse = List.of(new DesignThreadRequestDto(1, new BigDecimal(10)));
         CreateDesignDto createDto = new CreateDesignDto("Sunflowers", 1, DesignStatus.PLANNED, threadsResponse);
         DesignerResponseDto designerDto = new DesignerResponseDto(1, "Dimensions");
@@ -117,7 +117,7 @@ class DesignControllerTest {
         DesignResponseDto responseDto = new DesignResponseDto(1, "Sunflowers", designerDto, DesignStatus.PLANNED,
                 threads, true, imagePath);
 
-        when(service.save(createDto)).thenReturn(responseDto);
+        when(service.create(createDto)).thenReturn(responseDto);
 
         mockMvc.perform(post("/api/v1/designs")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -129,11 +129,11 @@ class DesignControllerTest {
     }
 
     @Test
-    void save_shouldReturn409_whenDesignAlreadyExistsForDesigner() throws Exception {
+    void create_shouldReturn409_whenDesignAlreadyExistsForDesigner() throws Exception {
         List<DesignThreadRequestDto> threadsResponse = List.of(new DesignThreadRequestDto(1, new BigDecimal(10)));
         CreateDesignDto createDto = new CreateDesignDto("Sunflowers", 1, DesignStatus.PLANNED, threadsResponse);
 
-        when(service.save(createDto))
+        when(service.create(createDto))
                 .thenThrow(new ResourceAlreadyExistsException("Design with name Sunflowers for designer already exists"));
 
         mockMvc.perform(post("/api/v1/designs")

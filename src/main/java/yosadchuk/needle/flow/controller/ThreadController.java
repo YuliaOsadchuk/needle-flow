@@ -1,6 +1,7 @@
 package yosadchuk.needle.flow.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +11,7 @@ import yosadchuk.needle.flow.service.ThreadService;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/threads")
@@ -19,27 +21,39 @@ public class ThreadController {
 
     @GetMapping
     public ResponseEntity<List<ThreadResponseDto>> findAll() {
+        log.info("[Thread][find all] request");
         return ResponseEntity.ok(threadService.findAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ThreadResponseDto> findById(@PathVariable Integer id) {
-        return ResponseEntity.ok(threadService.findById(id));
+        log.info("[Thread][find by id] id: {}", id);
+        ThreadResponseDto responseDto = threadService.findById(id);
+        log.info("[Thread][find by id] response: {}", responseDto);
+        return ResponseEntity.ok(responseDto);
     }
 
     @PostMapping
     public ResponseEntity<ThreadResponseDto> save(@RequestBody CreateThreadDto dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(threadService.create(dto));
+        log.info("[Thread][create] request: {}", dto);
+        ThreadResponseDto responseDto = threadService.create(dto);
+        log.info("[Thread][create] response: {}", responseDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ThreadResponseDto> update(@PathVariable Integer id, @RequestBody CreateThreadDto dto) {
-        return ResponseEntity.ok(threadService.update(id, dto));
+        log.info("[Thread][update] id: {}, request: {}", id, dto);
+        ThreadResponseDto responseDto = threadService.update(id, dto);
+        log.info("[Thread][update] response: {}", responseDto);
+        return ResponseEntity.ok(responseDto);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        log.info("[Thread][delete by id] id {}", id);
         threadService.delete(id);
+        log.info("[Thread][delete by id] id: {} deleted", id);
         return ResponseEntity.noContent().build();
     }
 }
