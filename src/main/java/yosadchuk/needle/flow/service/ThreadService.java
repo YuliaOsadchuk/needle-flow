@@ -19,7 +19,6 @@ import yosadchuk.needle.flow.repository.ThreadRepository;
 import java.math.BigDecimal;
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -57,7 +56,6 @@ public class ThreadService {
         inventory.setSkeinQuantity(0);
 
         inventoryRepository.save(inventory);
-        log.info("[Inventory] created : {}", inventory);
         entity.setInventory(inventory);
 
         return mapper.toDto(entity);

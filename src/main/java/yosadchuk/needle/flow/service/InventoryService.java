@@ -19,7 +19,7 @@ public class InventoryService {
     @Transactional
     public void addStock(AddInventoryRequestDto dto) {
         if (dto.addBobbinMeters() == null || dto.addSkeins() == null) {
-            throw new BadRequestException("One of the fields must be filled in");
+            throw new BadRequestException("Both fields are required");
         }
 
         Inventory inventory = inventoryRepository.findByThreadId(dto.threadId())
@@ -32,7 +32,7 @@ public class InventoryService {
     @Transactional
     public void updateStock(AddInventoryRequestDto dto) {
         if (dto.addBobbinMeters() == null || dto.addSkeins() == null) {
-            throw new BadRequestException("One of the fields must be filled in");
+            throw new BadRequestException("Both fields are required");
         }
 
         Inventory inventory = inventoryRepository.findByThreadId(dto.threadId())

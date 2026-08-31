@@ -26,7 +26,7 @@ public class DesignerController {
 
     @GetMapping("/{id}")
     public ResponseEntity<DesignerResponseDto> findById(@PathVariable Integer id) {
-        log.info("[Designer][find by id]  id: {}", id);
+        log.info("[Designer][find by id] id: {}", id);
         DesignerResponseDto responseDto = designerService.findById(id);
         log.info("[Designer][find by id] response: {}", responseDto);
         return ResponseEntity.ok(responseDto);

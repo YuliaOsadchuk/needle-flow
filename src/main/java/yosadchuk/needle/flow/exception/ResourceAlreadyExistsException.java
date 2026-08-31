@@ -5,7 +5,7 @@ public class ResourceAlreadyExistsException extends RuntimeException {
         super(message);
     }
 
-    public static ResourceAlreadyExistsException of(String entity, Object id) {
-        return new ResourceAlreadyExistsException(entity + " with name " + id + " already exists");
+    public static ResourceAlreadyExistsException of(String entity, Object value) {
+        return new ResourceAlreadyExistsException(entity + " with name " + value + " already exists");
     }
 }
