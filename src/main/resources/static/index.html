@@ -139,9 +139,9 @@
             </div>
         </div>
 
-        <div v-if="paginatedDesigns.length > 0">
+        <div v-if="filteredDesigns.length > 0">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                <div v-for="d in paginatedDesigns" :key="d.id"
+                <div v-for="d in filteredDesigns" :key="d.id"
                      @click="isSelectionMode ? toggleDesignSelection(d.id) : null"
                      :class="[
                          isSelectionMode ? 'cursor-pointer select-none' : '',
@@ -223,26 +223,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Pagination Designs -->
-            <div v-if="totalDesignPages > 1" class="mt-8 flex items-center justify-center gap-1.5">
-                <button @click="designsPage--" :disabled="designsPage === 1"
-                        class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-100 disabled:opacity-40 disabled:hover:bg-transparent transition">
-                    ←
-                </button>
-                <template v-for="page in getVisiblePages(designsPage, totalDesignPages)" :key="page">
-                    <span v-if="page === '...'" class="px-2 py-1 text-xs text-stone-400">...</span>
-                    <button v-else @click="designsPage = page"
-                            :class="designsPage === page ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'"
-                            class="px-3 py-1.5 rounded-xl border text-xs font-semibold transition">
-                        {{ page }}
-                    </button>
-                </template>
-                <button @click="designsPage++" :disabled="designsPage === totalDesignPages"
-                        class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-100 disabled:opacity-40 disabled:hover:bg-transparent transition">
-                    →
-                </button>
-            </div>
         </div>
 
         <div v-else class="text-center py-16 bg-white rounded-2xl border border-dashed border-stone-200">
@@ -261,7 +241,7 @@
             </button>
         </div>
 
-        <div v-if="paginatedDesigners.length > 0" class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+        <div v-if="designers.length > 0" class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
             <table class="w-full text-left text-sm">
                 <thead class="bg-stone-50 border-b border-stone-200 text-stone-500 uppercase text-xs font-semibold">
                 <tr>
@@ -271,7 +251,7 @@
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-stone-100">
-                <tr v-for="d in paginatedDesigners" :key="d.id" class="hover:bg-stone-50/50 transition">
+                <tr v-for="d in designers" :key="d.id" class="hover:bg-stone-50/50 transition">
                     <td class="px-6 py-4 font-mono text-xs text-stone-400">#{{ d.id }}</td>
                     <td class="px-6 py-4 font-semibold text-stone-900">{{ d.name }}</td>
                     <td class="px-6 py-4 text-right space-x-2">
@@ -291,26 +271,6 @@
 
         <div v-else class="text-center py-16 bg-white rounded-2xl border border-dashed border-stone-200">
             <p class="text-stone-400 text-base">Список дизайнерів порожній</p>
-        </div>
-
-        <!-- Pagination Designers -->
-        <div v-if="totalDesignerPages > 1" class="mt-6 flex items-center justify-center gap-1.5">
-            <button @click="designersPage--" :disabled="designersPage === 1"
-                    class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-100 disabled:opacity-40 disabled:hover:bg-transparent transition">
-                ←
-            </button>
-            <template v-for="page in getVisiblePages(designersPage, totalDesignerPages)" :key="page">
-                <span v-if="page === '...'" class="px-2 py-1 text-xs text-stone-400">...</span>
-                <button v-else @click="designersPage = page"
-                        :class="designersPage === page ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'"
-                        class="px-3 py-1.5 rounded-xl border text-xs font-semibold transition">
-                    {{ page }}
-                </button>
-            </template>
-            <button @click="designersPage++" :disabled="designersPage === totalDesignerPages"
-                    class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-100 disabled:opacity-40 disabled:hover:bg-transparent transition">
-                →
-            </button>
         </div>
     </main>
 
@@ -447,7 +407,6 @@
                             {{ t.inventory?.bobbinMeters || 0 }} м
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <!-- Дінамічна підсвітка зеленим лише якщо є залишок > 0 -->
                             <span :class="(t.inventory?.totalMeters || 0) > 0 ? 'text-emerald-600 font-bold' : 'text-stone-400 font-medium'">
                                 {{ t.inventory?.totalMeters || 0 }} м
                             </span>
@@ -517,7 +476,7 @@
             </button>
         </div>
 
-        <div v-if="paginatedManufacturers.length > 0" class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+        <div v-if="manufacturers.length > 0" class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
             <table class="w-full text-left text-sm">
                 <thead class="bg-stone-50 border-b border-stone-200 text-stone-500 uppercase text-xs font-semibold">
                 <tr>
@@ -527,7 +486,7 @@
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-stone-100">
-                <tr v-for="m in paginatedManufacturers" :key="m.id" class="hover:bg-stone-50/50 transition">
+                <tr v-for="m in manufacturers" :key="m.id" class="hover:bg-stone-50/50 transition">
                     <td class="px-6 py-4 font-mono text-xs text-stone-400">#{{ m.id }}</td>
                     <td class="px-6 py-4 font-semibold text-stone-900">{{ m.name }}</td>
                     <td class="px-6 py-4 text-right space-x-2">
@@ -547,26 +506,6 @@
 
         <div v-else class="text-center py-16 bg-white rounded-2xl border border-dashed border-stone-200">
             <p class="text-stone-400 text-base">Список виробників порожній</p>
-        </div>
-
-        <!-- Pagination Manufacturers -->
-        <div v-if="totalManufacturerPages > 1" class="mt-6 flex items-center justify-center gap-1.5">
-            <button @click="manufacturersPage--" :disabled="manufacturersPage === 1"
-                    class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-100 disabled:opacity-40 disabled:hover:bg-transparent transition">
-                ←
-            </button>
-            <template v-for="page in getVisiblePages(manufacturersPage, totalManufacturerPages)" :key="page">
-                <span v-if="page === '...'" class="px-2 py-1 text-xs text-stone-400">...</span>
-                <button v-else @click="manufacturersPage = page"
-                        :class="manufacturersPage === page ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'"
-                        class="px-3 py-1.5 rounded-xl border text-xs font-semibold transition">
-                    {{ page }}
-                </button>
-            </template>
-            <button @click="manufacturersPage++" :disabled="manufacturersPage === totalManufacturerPages"
-                    class="px-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-100 disabled:opacity-40 disabled:hover:bg-transparent transition">
-                →
-            </button>
         </div>
     </main>
 
@@ -1027,23 +966,10 @@
             const shoppingList = ref([]);
             const isCalculatingShoppingList = ref(false);
 
-            // Pagination State
-            const designsPage = ref(1);
-            const designsPerPage = ref(6);
-
+            // Pagination State for Threads (Backend)
             const threadsPage = ref(1);
             const threadsPerPage = ref(15);
-
-            const designersPage = ref(1);
-            const designersPerPage = ref(15);
-
-            const manufacturersPage = ref(1);
-            const manufacturersPerPage = ref(15);
-
-            // Reset page numbers when search / filter changes
-            watch([designSearch, selectedDesignerFilter], () => {
-                designsPage.value = 1;
-            });
+            const totalThreadPages = ref(1);
 
             watch([threadSearch, selectedManufacturerFilter, threadViewMode], () => {
                 threadsPage.value = 1;
@@ -1160,7 +1086,7 @@
                 try {
                     const res = await axios.get(`${API_BASE}/threads`, {
                         params: {
-                            page: threadsPage.value - 1, // бекенд рахує з 0, фронт — з 1
+                            page: threadsPage.value - 1,
                             size: threadsPerPage.value,
                             search: threadSearch.value || undefined,
                             manufacturerId: selectedManufacturerFilter.value || undefined
@@ -1174,15 +1100,18 @@
                 }
             };
 
-            watch(threadsPage, fetchThreads);
+            watch(threadsPage, fetchThreads, { immediate: false });
 
             watch(selectedManufacturerFilter, () => {
-                threadsPage.value = 1;
-                fetchThreads();
+                if (loadedTabs.value.threads) {
+                    threadsPage.value = 1;
+                    fetchThreads();
+                }
             });
 
             let searchTimeout;
             watch(threadSearch, () => {
+                if (!loadedTabs.value.threads) return;
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
                     threadsPage.value = 1;
@@ -1586,27 +1515,6 @@
                 });
             });
 
-            // Paginated Computeds
-            const totalDesignPages = computed(() => Math.ceil(filteredDesigns.value.length / designsPerPage.value) || 1);
-            const paginatedDesigns = computed(() => {
-                const start = (designsPage.value - 1) * designsPerPage.value;
-                return filteredDesigns.value.slice(start, start + designsPerPage.value);
-            });
-
-            const totalThreadPages = ref(1);
-
-            const totalDesignerPages = computed(() => Math.ceil(designers.value.length / designersPerPage.value) || 1);
-            const paginatedDesigners = computed(() => {
-                const start = (designersPage.value - 1) * designersPerPage.value;
-                return designers.value.slice(start, start + designersPerPage.value);
-            });
-
-            const totalManufacturerPages = computed(() => Math.ceil(manufacturers.value.length / manufacturersPerPage.value) || 1);
-            const paginatedManufacturers = computed(() => {
-                const start = (manufacturersPage.value - 1) * manufacturersPerPage.value;
-                return manufacturers.value.slice(start, start + manufacturersPerPage.value);
-            });
-
             // Helper for smart page buttons with ellipsis (...)
             const getVisiblePages = (currentPage, totalPages) => {
                 if (totalPages <= 7) {
@@ -1621,10 +1529,8 @@
                 return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
             };
 
-            // On initial load: fetch light option metadata and only the active tab data
+            // Only load data for the active initial tab (designs)
             onMounted(() => {
-                fetchManufacturers();
-                fetchDesigners();
                 fetchDesigns();
             });
 
@@ -1640,17 +1546,8 @@
                 designSearch,
                 selectedDesignerFilter,
                 filteredDesigns,
-                designsPage,
-                totalDesignPages,
-                paginatedDesigns,
                 threadsPage,
                 totalThreadPages,
-                designersPage,
-                totalDesignerPages,
-                paginatedDesigners,
-                manufacturersPage,
-                totalManufacturerPages,
-                paginatedManufacturers,
                 getVisiblePages,
                 isSelectionMode,
                 selectedDesignIds,

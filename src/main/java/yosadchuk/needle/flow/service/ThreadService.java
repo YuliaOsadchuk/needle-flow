@@ -11,7 +11,6 @@ import yosadchuk.needle.flow.exception.ResourceNotFoundException;
 import yosadchuk.needle.flow.mapper.ThreadMapper;
 import yosadchuk.needle.flow.model.dto.CreateThreadDto;
 import yosadchuk.needle.flow.model.dto.PageResponseDto;
-import yosadchuk.needle.flow.model.dto.ThreadOptionDto;
 import yosadchuk.needle.flow.model.dto.ThreadResponseDto;
 import yosadchuk.needle.flow.model.entity.Inventory;
 import yosadchuk.needle.flow.model.entity.Manufacturer;
@@ -22,7 +21,6 @@ import yosadchuk.needle.flow.repository.ThreadRepository;
 import yosadchuk.needle.flow.repository.spec.ThreadSpecifications;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
