@@ -2,14 +2,14 @@ package yosadchuk.needle.flow.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import yosadchuk.needle.flow.model.dto.CreateThreadDto;
-import yosadchuk.needle.flow.model.dto.ThreadResponseDto;
+import yosadchuk.needle.flow.model.dto.*;
 import yosadchuk.needle.flow.service.ThreadService;
-
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -20,9 +20,14 @@ public class ThreadController {
     private final ThreadService threadService;
 
     @GetMapping
-    public ResponseEntity<List<ThreadResponseDto>> findAll() {
-        log.info("[Thread][find all] request");
-        return ResponseEntity.ok(threadService.findAll());
+    public ResponseEntity<PageResponseDto<ThreadResponseDto>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer manufacturerId) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id"));
+        log.info("[Thread][find all] page: {}, size: {}, search: {}, manufacturerId: {}, ", page, size, search, manufacturerId);
+        return ResponseEntity.ok(threadService.findAll(pageable, search, manufacturerId));
     }
 
     @GetMapping("/{id}")

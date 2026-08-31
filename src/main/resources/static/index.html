@@ -350,11 +350,11 @@
             </button>
         </div>
 
-        <div v-if="paginatedThreads.length > 0">
+        <div v-if="threads.length > 0">
             <!-- 1. Grid View (Картки) -->
             <div v-if="threadViewMode === 'grid'"
                  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <div v-for="t in paginatedThreads" :key="t.id"
+                <div v-for="t in threads" :key="t.id"
                      class="bg-white border border-stone-200/80 rounded-2xl p-4 shadow-sm hover:shadow-md transition flex flex-col justify-between group">
                     <div>
                         <div class="flex items-center justify-between mb-3">
@@ -430,7 +430,7 @@
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-stone-100">
-                    <tr v-for="t in paginatedThreads" :key="t.id" class="hover:bg-stone-50/50 transition">
+                    <tr v-for="t in threads" :key="t.id" class="hover:bg-stone-50/50 transition">
                         <td class="px-4 py-3 text-xs font-semibold text-stone-500">
                             {{ t.manufacturer ? t.manufacturer.name : '—' }}
                         </td>
@@ -1032,13 +1032,13 @@
             const designsPerPage = ref(6);
 
             const threadsPage = ref(1);
-            const threadsPerPage = ref(17);
+            const threadsPerPage = ref(15);
 
             const designersPage = ref(1);
-            const designersPerPage = ref(17);
+            const designersPerPage = ref(15);
 
             const manufacturersPage = ref(1);
-            const manufacturersPerPage = ref(17);
+            const manufacturersPerPage = ref(15);
 
             // Reset page numbers when search / filter changes
             watch([designSearch, selectedDesignerFilter], () => {
@@ -1158,13 +1158,37 @@
             // API Calls
             const fetchThreads = async () => {
                 try {
-                    const res = await axios.get(`${API_BASE}/threads`);
-                    threads.value = res.data;
+                    const res = await axios.get(`${API_BASE}/threads`, {
+                        params: {
+                            page: threadsPage.value - 1, // бекенд рахує з 0, фронт — з 1
+                            size: threadsPerPage.value,
+                            search: threadSearch.value || undefined,
+                            manufacturerId: selectedManufacturerFilter.value || undefined
+                        }
+                    });
+                    threads.value = res.data.content;
+                    totalThreadPages.value = res.data.totalPages;
                     loadedTabs.value.threads = true;
                 } catch (err) {
                     showToast('Помилка завантаження ниток', true);
                 }
             };
+
+            watch(threadsPage, fetchThreads);
+
+            watch(selectedManufacturerFilter, () => {
+                threadsPage.value = 1;
+                fetchThreads();
+            });
+
+            let searchTimeout;
+            watch(threadSearch, () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    threadsPage.value = 1;
+                    fetchThreads();
+                }, 300);
+            });
 
             const fetchManufacturers = async () => {
                 try {
@@ -1548,16 +1572,6 @@
             };
 
             // Computed Filters
-            const filteredThreads = computed(() => {
-                return threads.value.filter(t => {
-                    const matchesSearch = t.code.toLowerCase().includes(threadSearch.value.toLowerCase()) ||
-                        t.name.toLowerCase().includes(threadSearch.value.toLowerCase());
-                    const matchesMfr = !selectedManufacturerFilter.value ||
-                        (t.manufacturer && t.manufacturer.id === selectedManufacturerFilter.value);
-                    return matchesSearch && matchesMfr;
-                });
-            });
-
             const filteredDesigns = computed(() => {
                 return designs.value.filter(d => {
                     const nameMatch = !designSearch.value ||
@@ -1579,11 +1593,7 @@
                 return filteredDesigns.value.slice(start, start + designsPerPage.value);
             });
 
-            const totalThreadPages = computed(() => Math.ceil(filteredThreads.value.length / threadsPerPage.value) || 1);
-            const paginatedThreads = computed(() => {
-                const start = (threadsPage.value - 1) * threadsPerPage.value;
-                return filteredThreads.value.slice(start, start + threadsPerPage.value);
-            });
+            const totalThreadPages = ref(1);
 
             const totalDesignerPages = computed(() => Math.ceil(designers.value.length / designersPerPage.value) || 1);
             const paginatedDesigners = computed(() => {
@@ -1629,14 +1639,12 @@
                 selectedManufacturerFilter,
                 designSearch,
                 selectedDesignerFilter,
-                filteredThreads,
                 filteredDesigns,
                 designsPage,
                 totalDesignPages,
                 paginatedDesigns,
                 threadsPage,
                 totalThreadPages,
-                paginatedThreads,
                 designersPage,
                 totalDesignerPages,
                 paginatedDesigners,

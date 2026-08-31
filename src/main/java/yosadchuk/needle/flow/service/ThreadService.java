@@ -1,13 +1,17 @@
 package yosadchuk.needle.flow.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import yosadchuk.needle.flow.exception.ResourceAlreadyExistsException;
 import yosadchuk.needle.flow.exception.ResourceNotFoundException;
 import yosadchuk.needle.flow.mapper.ThreadMapper;
 import yosadchuk.needle.flow.model.dto.CreateThreadDto;
+import yosadchuk.needle.flow.model.dto.PageResponseDto;
+import yosadchuk.needle.flow.model.dto.ThreadOptionDto;
 import yosadchuk.needle.flow.model.dto.ThreadResponseDto;
 import yosadchuk.needle.flow.model.entity.Inventory;
 import yosadchuk.needle.flow.model.entity.Manufacturer;
@@ -15,6 +19,7 @@ import yosadchuk.needle.flow.model.entity.Thread;
 import yosadchuk.needle.flow.repository.InventoryRepository;
 import yosadchuk.needle.flow.repository.ManufacturerRepository;
 import yosadchuk.needle.flow.repository.ThreadRepository;
+import yosadchuk.needle.flow.repository.spec.ThreadSpecifications;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,8 +33,13 @@ public class ThreadService {
     private final InventoryRepository inventoryRepository;
     private final ThreadMapper mapper;
 
-    public List<ThreadResponseDto> findAll() {
-        return threadRepository.findAll().stream().map(mapper::toDto).toList();
+    public PageResponseDto<ThreadResponseDto> findAll(Pageable pageable, String search, Integer manufacturerId) {
+        Specification<Thread> spec = Specification.where(ThreadSpecifications.withDetails())
+                .and(ThreadSpecifications.hasSearch(search))
+                .and(ThreadSpecifications.hasManufacturer(manufacturerId));
+
+        Page<Thread> page = threadRepository.findAll(spec, pageable);
+        return PageResponseDto.from(page.map(mapper::toDto));
     }
 
     public ThreadResponseDto findById(Integer id) {
