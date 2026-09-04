@@ -3,11 +3,13 @@ package yosadchuk.needle.flow.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import yosadchuk.needle.flow.model.dto.ErrorResponseDto;
 
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 @Slf4j
@@ -35,6 +37,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleBadRequest(BadRequestException e) {
         log.warn("Bad request: {}", e.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponseDto> handleValidationException(MethodArgumentNotValidException e) {
+        String errorMessage = e.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .collect(Collectors.joining(";"));
+
+        return buildResponse(HttpStatus.BAD_REQUEST, errorMessage);
     }
 
     @ExceptionHandler(Exception.class)

@@ -1,6 +1,9 @@
 package yosadchuk.needle.flow.controller;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -8,16 +11,16 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 import yosadchuk.needle.flow.exception.ResourceAlreadyExistsException;
+import yosadchuk.needle.flow.exception.ResourceInUseException;
 import yosadchuk.needle.flow.exception.ResourceNotFoundException;
-import yosadchuk.needle.flow.model.dto.CreateThreadDto;
-import yosadchuk.needle.flow.model.dto.InventoryResponseDto;
-import yosadchuk.needle.flow.model.dto.ManufacturerResponseDto;
-import yosadchuk.needle.flow.model.dto.ThreadResponseDto;
+import yosadchuk.needle.flow.model.dto.*;
 import yosadchuk.needle.flow.service.ThreadService;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Stream;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -199,6 +202,40 @@ public class ThreadControllerTest {
                 .andExpect(status().isConflict());
     }
 
+    @ParameterizedTest
+    @MethodSource("providerInvalidThreads")
+    void create_shouldReturn400_WhenDtoIsInvalid(CreateThreadDto invalidDto, String expectedErrorMessage) throws Exception {
+        mockMvc.perform(post("/api/v1/threads")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value(containsString(expectedErrorMessage)));
+
+        verifyNoInteractions(service);
+    }
+
+    @ParameterizedTest
+    @MethodSource("providerInvalidThreads")
+    void update_shouldReturn400_WhenDtoIsInvalid(CreateThreadDto invalidDto, String expectedErrorMessage) throws Exception {
+        mockMvc.perform(put("/api/v1/threads/{id}", 1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value(containsString(expectedErrorMessage)));
+
+        verifyNoInteractions(service);
+    }
+
+    private static Stream<Arguments> providerInvalidThreads() {
+        return Stream.of(
+                Arguments.of(new CreateThreadDto("", "Black", 1), "Code is required"),
+                Arguments.of(new CreateThreadDto("310", "", 1), "Name is required"),
+                Arguments.of(new CreateThreadDto("310", "Black", null), "Manufacturer is required")
+        );
+    }
+
     @Test
     void delete_shouldReturnNoContent_whenRecordWasDeleted() throws Exception {
         mockMvc.perform(delete("/api/v1/threads/{id}", 10))
@@ -218,14 +255,14 @@ public class ThreadControllerTest {
         verify(service).delete(99);
     }
 
-//    @Test
-//    void delete_shouldReturn409_whenThreadIsInUseInSkeinsOrProjects() throws Exception {
-//        doThrow(new ResourceInUseException("Cannot delete thread because it is used in active skeins or projects"))
-//                .when(service).delete(10);
-//
-//        mockMvc.perform(delete("/api/v1/threads/{id}", 10))
-//                .andExpect(status().isConflict());
-//
-//        verify(service).delete(10);
-//    }
+    @Test
+    void delete_shouldReturn409_whenThreadIsInUseInSkeinsOrProjects() throws Exception {
+        doThrow(new ResourceInUseException("Cannot delete thread because it is used in active skeins or projects"))
+                .when(service).delete(10);
+
+        mockMvc.perform(delete("/api/v1/threads/{id}", 10))
+                .andExpect(status().isConflict());
+
+        verify(service).delete(10);
+    }
 }

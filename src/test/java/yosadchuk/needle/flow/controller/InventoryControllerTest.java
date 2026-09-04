@@ -4,6 +4,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -16,10 +19,13 @@ import yosadchuk.needle.flow.model.dto.AddInventoryRequestDto;
 import yosadchuk.needle.flow.service.InventoryService;
 
 import java.math.BigDecimal;
+import java.util.stream.Stream;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(InventoryController.class)
@@ -60,7 +66,7 @@ public class InventoryControllerTest {
         @Test
         @DisplayName("Should return 400 Bad Request when validation fails in service")
         void addStock_BadRequest() throws Exception {
-            AddInventoryRequestDto invalidDto = new AddInventoryRequestDto(1, null, null);
+            AddInventoryRequestDto invalidDto = new AddInventoryRequestDto(1, 1, BigDecimal.ZERO);
             doThrow(new BadRequestException("One of the fields must be filled in"))
                     .when(inventoryService).addStock(any(AddInventoryRequestDto.class));
 
@@ -107,7 +113,7 @@ public class InventoryControllerTest {
         @Test
         @DisplayName("Should return 400 Bad Request when validation fails in service")
         void updateStock_BadRequest() throws Exception {
-            AddInventoryRequestDto invalidDto = new AddInventoryRequestDto(1, null, BigDecimal.TEN);
+            AddInventoryRequestDto invalidDto = new AddInventoryRequestDto(1, 1, BigDecimal.TEN);
             doThrow(new BadRequestException("One of the fields must be filled in"))
                     .when(inventoryService).updateStock(any(AddInventoryRequestDto.class));
 
@@ -132,5 +138,42 @@ public class InventoryControllerTest {
 
             verify(inventoryService, times(1)).updateStock(validDto);
         }
+    }
+
+    @ParameterizedTest
+    @MethodSource("providerInvalidThreads")
+    void add_shouldReturn400_WhenDtoIsInvalid(AddInventoryRequestDto invalidDto, String expectedErrorMessage) throws Exception {
+        mockMvc.perform(post("/api/v1/inventory/add")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value(containsString(expectedErrorMessage)));
+
+        verifyNoInteractions(inventoryService);
+    }
+
+    @ParameterizedTest
+    @MethodSource("providerInvalidThreads")
+    void update_shouldReturn400_WhenDtoIsInvalid(AddInventoryRequestDto invalidDto, String expectedErrorMessage) throws Exception {
+        mockMvc.perform(post("/api/v1/inventory/update")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value(containsString(expectedErrorMessage)));
+
+        verifyNoInteractions(inventoryService);
+    }
+
+    private static Stream<Arguments> providerInvalidThreads() {
+        return Stream.of(
+                Arguments.of(new AddInventoryRequestDto(null, 1, BigDecimal.TEN), "Thread is required"),
+                Arguments.of(new AddInventoryRequestDto(1, null, BigDecimal.TEN), "Skeins is required"),
+                Arguments.of(new AddInventoryRequestDto(1, -1, BigDecimal.TEN), "Skeins cannot be negative"),
+                Arguments.of(new AddInventoryRequestDto(1, 1, null), "Meters is required"),
+                Arguments.of(new AddInventoryRequestDto(1, 1, new BigDecimal("-2.9")),
+                        "Meters cannot be negative")
+        );
     }
 }

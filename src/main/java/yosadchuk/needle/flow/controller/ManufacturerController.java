@@ -1,5 +1,6 @@
 package yosadchuk.needle.flow.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -33,7 +34,7 @@ public class ManufacturerController {
     }
 
     @PostMapping()
-    public ResponseEntity<ManufacturerResponseDto> create(@RequestBody CreateManufacturerDto dto) {
+    public ResponseEntity<ManufacturerResponseDto> create(@Valid @RequestBody CreateManufacturerDto dto) {
         log.info("[Manufacturer][create] request: {}", dto);
         ManufacturerResponseDto responseDto = manufacturerService.create(dto);
         log.info("[Manufacturer][create] response: {}", responseDto);
@@ -41,7 +42,7 @@ public class ManufacturerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ManufacturerResponseDto> update(@PathVariable Integer id, @RequestBody CreateManufacturerDto dto) {
+    public ResponseEntity<ManufacturerResponseDto> update(@PathVariable Integer id, @Valid  @RequestBody CreateManufacturerDto dto) {
         log.info("[Manufacturer][update] id: {}, request: {}", id, dto);
         ManufacturerResponseDto responseDto = manufacturerService.update(id, dto);
         log.info("[Manufacturer][update] response: {}", responseDto);

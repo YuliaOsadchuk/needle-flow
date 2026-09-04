@@ -1,5 +1,6 @@
 package yosadchuk.needle.flow.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -49,7 +50,7 @@ public class ThreadController {
     }
 
     @PostMapping
-    public ResponseEntity<ThreadResponseDto> save(@RequestBody CreateThreadDto dto) {
+    public ResponseEntity<ThreadResponseDto> save(@Valid @RequestBody CreateThreadDto dto) {
         log.info("[Thread][create] request: {}", dto);
         ThreadResponseDto responseDto = threadService.create(dto);
         log.info("[Thread][create] response: {}", responseDto);
@@ -57,7 +58,7 @@ public class ThreadController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ThreadResponseDto> update(@PathVariable Integer id, @RequestBody CreateThreadDto dto) {
+    public ResponseEntity<ThreadResponseDto> update(@PathVariable Integer id, @Valid  @RequestBody CreateThreadDto dto) {
         log.info("[Thread][update] id: {}, request: {}", id, dto);
         ThreadResponseDto responseDto = threadService.update(id, dto);
         log.info("[Thread][update] response: {}", responseDto);

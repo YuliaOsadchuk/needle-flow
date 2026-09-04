@@ -1,5 +1,6 @@
 package yosadchuk.needle.flow.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ public class InventoryController {
     private final InventoryService inventoryService;
 
     @PostMapping("/add")
-    public ResponseEntity<Void> addStock(@RequestBody AddInventoryRequestDto dto) {
+    public ResponseEntity<Void> addStock(@Valid @RequestBody AddInventoryRequestDto dto) {
         log.info("[Inventory][add stock] dto: {}", dto);
         inventoryService.addStock(dto);
         log.info("[Inventory][add stock] successfully added to stock: {}", dto);
@@ -27,7 +28,7 @@ public class InventoryController {
     }
 
     @PostMapping("/update")
-    public ResponseEntity<Void> updateStock(@RequestBody AddInventoryRequestDto dto) {
+    public ResponseEntity<Void> updateStock(@Valid @RequestBody AddInventoryRequestDto dto) {
         log.info("[Inventory][update stock] dto: {}", dto);
         inventoryService.updateStock(dto);
         log.info("[Inventory][update stock] successfully updated stock: {}", dto);

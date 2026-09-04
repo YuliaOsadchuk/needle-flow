@@ -1,5 +1,6 @@
 package yosadchuk.needle.flow.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -33,7 +34,7 @@ public class DesignerController {
     }
 
     @PostMapping()
-    public ResponseEntity<DesignerResponseDto> create(@RequestBody CreateDesignerDto dto) {
+    public ResponseEntity<DesignerResponseDto> create(@Valid @RequestBody CreateDesignerDto dto) {
         log.info("[Designer][create] request: {}", dto);
         DesignerResponseDto responseDto = designerService.create(dto);
         log.info("[Designer][create] response: {}", responseDto);
@@ -41,7 +42,7 @@ public class DesignerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DesignerResponseDto> update(@PathVariable Integer id, @RequestBody CreateDesignerDto dto) {
+    public ResponseEntity<DesignerResponseDto> update(@PathVariable Integer id, @Valid  @RequestBody CreateDesignerDto dto) {
         log.info("[Designer][update] id: {}, request: {}", id, dto);
         DesignerResponseDto responseDto = designerService.update(id, dto);
         log.info("[Designer][update] response: {}", responseDto);

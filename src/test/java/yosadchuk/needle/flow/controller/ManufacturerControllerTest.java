@@ -1,6 +1,9 @@
 package yosadchuk.needle.flow.controller;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -16,7 +19,9 @@ import yosadchuk.needle.flow.model.dto.ManufacturerResponseDto;
 import yosadchuk.needle.flow.service.ManufacturerService;
 
 import java.util.List;
+import java.util.stream.Stream;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -148,6 +153,38 @@ class ManufacturerControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(manufacturerDto)))
                 .andExpect(status().isConflict());
+    }
+
+    @ParameterizedTest
+    @MethodSource("providerInvalidThreads")
+    void create_shouldReturn400_WhenDtoIsInvalid(CreateManufacturerDto invalidDto, String expectedErrorMessage) throws Exception {
+        mockMvc.perform(post("/api/v1/manufacturers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value(containsString(expectedErrorMessage)));
+
+        verifyNoInteractions(service);
+    }
+
+    @ParameterizedTest
+    @MethodSource("providerInvalidThreads")
+    void update_shouldReturn400_WhenDtoIsInvalid(CreateManufacturerDto invalidDto, String expectedErrorMessage) throws Exception {
+        mockMvc.perform(put("/api/v1/manufacturers/{id}", 1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value(containsString(expectedErrorMessage)));
+
+        verifyNoInteractions(service);
+    }
+
+    private static Stream<Arguments> providerInvalidThreads() {
+        return Stream.of(
+                Arguments.of(new CreateManufacturerDto(""), "Name is required")
+        );
     }
 
     @Test

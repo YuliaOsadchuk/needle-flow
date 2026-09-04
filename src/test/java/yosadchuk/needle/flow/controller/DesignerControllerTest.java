@@ -1,5 +1,8 @@
 package yosadchuk.needle.flow.controller;
 
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +18,9 @@ import yosadchuk.needle.flow.model.dto.DesignerResponseDto;
 import yosadchuk.needle.flow.service.DesignerService;
 
 import java.util.List;
+import java.util.stream.Stream;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -149,6 +154,38 @@ public class DesignerControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isConflict());
+    }
+
+    @ParameterizedTest
+    @MethodSource("providerInvalidThreads")
+    void create_shouldReturn400_WhenDtoIsInvalid(CreateDesignerDto invalidDto, String expectedErrorMessage) throws Exception {
+        mockMvc.perform(post("/api/v1/designers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value(containsString(expectedErrorMessage)));
+
+        verifyNoInteractions(service);
+    }
+
+    @ParameterizedTest
+    @MethodSource("providerInvalidThreads")
+    void update_shouldReturn400_WhenDtoIsInvalid(CreateDesignerDto invalidDto, String expectedErrorMessage) throws Exception {
+        mockMvc.perform(put("/api/v1/designers/{id}", 1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value(containsString(expectedErrorMessage)));
+
+        verifyNoInteractions(service);
+    }
+
+    private static Stream<Arguments> providerInvalidThreads() {
+        return Stream.of(
+                Arguments.of(new CreateDesignerDto(""), "Name is required")
+        );
     }
 
     @Test
