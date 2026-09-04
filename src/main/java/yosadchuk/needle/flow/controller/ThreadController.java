@@ -36,7 +36,7 @@ public class ThreadController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Integer manufacturerId) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id"));
-        log.info("[Thread][find all] page: {}, size: {}, search: {}, manufacturerId: {}, ", page, size, search, manufacturerId);
+        log.info("[Thread][find all] page: {}, size: {}, search: {}, manufacturerId: {} ", page, size, search, manufacturerId);
         return ResponseEntity.ok(threadService.findAllPaged(pageable, search, manufacturerId));
     }
 

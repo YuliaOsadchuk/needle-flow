@@ -18,7 +18,7 @@ public interface DesignRepository extends JpaRepository<Design, Integer> {
             LEFT JOIN FETCH d.threads dt
             LEFT JOIN FETCH dt.thread t
             LEFT JOIN FETCH t.inventory
-            JOIN FETCH t.manufacturer
+            LEFT JOIN FETCH t.manufacturer
             WHERE d.id = :id
             ORDER BY t.id
             """)
@@ -30,7 +30,7 @@ public interface DesignRepository extends JpaRepository<Design, Integer> {
             LEFT JOIN FETCH d.threads dt
             LEFT JOIN FETCH dt.thread t
             LEFT JOIN FETCH t.inventory
-            JOIN FETCH t.manufacturer
+            LEFT JOIN FETCH t.manufacturer
             ORDER BY d.id, t.id
             """)
     List<Design> findAllWithDetails();
