@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 public class InventoryMapper {
 
     public InventoryResponseDto toDto(Inventory entity) {
+        if (entity == null) return null;
         return InventoryResponseDto.builder()
                 .id(entity.getId())
                 .skeinsQuantity(entity.getSkeinQuantity())
